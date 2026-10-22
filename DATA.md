@@ -117,15 +117,9 @@ Then open a **pull request** on GitHub, ask someone to review it, and merge it i
 
 ### Publishing to the website
 
-The website does not update by itself. After a change is merged, or after refreshing the data:
+The website updates **automatically**: every change saved to the `main` branch — a merged pull request, a file edited on github.com, or new data from `npm run refresh` / `publish.bat` — is rebuilt and published within about two minutes by the *Deploy website* job (`.github/workflows/deploy-pages.yml`). To republish by hand, open the **Actions** tab → **Deploy website** → **Run workflow**.
 
-```bash
-git checkout main
-git pull
-npm run deploy:pages
-```
-
-The site updates within one or two minutes. For new data, `npm run refresh` does the export, the GitHub save and the publishing in one step.
+Small text changes can be made directly on github.com: open the file, click the pencil icon, edit, and click **Commit changes**.
 
 ## Where to change common things
 
