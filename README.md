@@ -4,6 +4,8 @@ A new public statistics portal for the **National Institute of Statistics (NIS),
 
 It is a drop-in public front end for the existing NIS data platform (`nis-web-portal-server`): it reads the same approved data, speaks the same API, and keeps the old portal's URLs working.
 
+**Live site:** https://erricka.github.io/national-data-statistic-of-cambodia/ · **Team guide:** [DATA.md](DATA.md) — how the data flows, how to refresh it, and how to contribute and publish changes.
+
 ![Home page](docs/screenshots/home.webp)
 
 | | |
