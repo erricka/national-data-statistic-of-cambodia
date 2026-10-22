@@ -1,0 +1,70 @@
+{
+  "themes": [
+    {
+      "id": "economy",
+      "name": { "en": "Economy & Finance", "km": "សេដ្ឋកិច្ច និងហិរញ្ញវត្ថុ" },
+      "description": {
+        "en": "Prices, public finance, money and banking, trade, investment and the balance of payments.",
+        "km": "ថ្លៃទំនិញ ហិរញ្ញវត្ថុសាធារណៈ រូបិយវត្ថុ និងធនាគារ ពាណិជ្ជកម្ម វិនិយោគ និងជញ្ជីងទូទាត់។"
+      },
+      "color": "#0B3D91",
+      "icon": "economy",
+      "categoryIds": [5, 10, 35, 15, 90, 99]
+    },
+    {
+      "id": "industry",
+      "name": { "en": "Industry & Services", "km": "ឧស្សាហកម្ម និងសេវាកម្ម" },
+      "description": {
+        "en": "Energy and mining, manufacturing, telecommunications, tourism, transport and aviation.",
+        "km": "ថាមពល និងរ៉ែ ឧស្សាហកម្មកែច្នៃ ទូរគមនាគមន៍ ទេសចរណ៍ ការដឹកជញ្ជូន និងអាកាសចរណ៍។"
+      },
+      "color": "#C8551B",
+      "icon": "industry",
+      "categoryIds": [13, 33, 22, 27, 25, 32]
+    },
+    {
+      "id": "agriculture",
+      "name": { "en": "Agriculture & Environment", "km": "កសិកម្ម និងបរិស្ថាន" },
+      "description": {
+        "en": "Crops, livestock and fisheries, forests and protected areas, climate, water, land and rural development.",
+        "km": "ដំណាំ បសុសត្វ និងជលផល ព្រៃឈើ និងតំបន់ការពារ អាកាសធាតុ ធនធានទឹក ដីធ្លី និងការអភិវឌ្ឍជនបទ។"
+      },
+      "color": "#2E7D32",
+      "icon": "agriculture",
+      "categoryIds": [17, 19, 29, 20, 28]
+    },
+    {
+      "id": "population",
+      "name": { "en": "Population & Labour", "km": "ប្រជាជន និងការងារ" },
+      "description": {
+        "en": "Civil registration, migration, the labour market, social protection and gender.",
+        "km": "ការចុះបញ្ជីអត្រានុកូលដ្ឋាន ចំណាកស្រុក ទីផ្សារការងារ កិច្ចគាំពារសង្គម និងយេនឌ័រ។"
+      },
+      "color": "#6A1B9A",
+      "icon": "population",
+      "categoryIds": [7, 61, 21, 24]
+    },
+    {
+      "id": "society",
+      "name": { "en": "Health, Education & Culture", "km": "សុខាភិបាល អប់រំ និងវប្បធម៌" },
+      "description": {
+        "en": "Health services and outcomes, schools and students, culture, religion and media.",
+        "km": "សេវាសុខាភិបាល សាលារៀន និងសិស្ស វប្បធម៌ សាសនា និងប្រព័ន្ធផ្សព្វផ្សាយ។"
+      },
+      "color": "#00838F",
+      "icon": "society",
+      "categoryIds": [12, 16, 18, 23, 11]
+    },
+    {
+      "id": "governance",
+      "name": { "en": "Government & Justice", "km": "រដ្ឋបាល និងយុត្តិធម៌" },
+      "description": {
+        "en": "Civil service, courts and legal services, inspection and foreign relations.",
+        "km": "មុខងារសាធារណៈ តុលាការ និងសេវាច្បាប់ អធិការកិច្ច និងទំនាក់ទំនងការបរទេស។"
+      },
+      "color": "#AD1457",
+      "icon": "governance",
+      "categoryIds": [8, 9, 26, 31]
+    }
+  ]
+}
