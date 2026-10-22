@@ -74,7 +74,7 @@ npm run export:data
 ```
 # .env
 DATABASE_URL=postgres://user:pass@db-host:5432/nis
-NIS_API_URL=https://your-nis-server/api/nis-portal   # optional
+NIS_API_URL=https://your-nis-server/api/nis-portal   # recommended: keeps official table layouts
 ```
 
 | Option | |
@@ -83,6 +83,8 @@ NIS_API_URL=https://your-nis-server/api/nis-portal   # optional
 | `--tables=db` | Raw rows straight from PostgreSQL, column names as headers (default without `NIS_API_URL`). |
 | `--tables=skip` | Keep the table files already on disk; refresh only catalog, indicators and provinces. |
 | `--out=<dir>` | Output directory (default `public/data`). |
+
+`npm run refresh` runs the export, commits the new snapshot and republishes GitHub Pages in one step — suitable for a nightly schedule.
 
 Only data the portal is meant to publish is read: datasets with `status = 'Y'` and rows belonging to uploads approved for release (`datasource_history.status = '01'`) — the same rule the server applies to its public endpoints. Users, roles, audit logs and credentials are never read.
 

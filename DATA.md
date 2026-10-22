@@ -30,19 +30,18 @@ PostgreSQL database  ──►  npm run export:data  ──►  public/data/*.js
 The database address goes in a file called **`.env`** in the project folder. It stays on your computer and is never uploaded to GitHub.
 
 1. Copy `.env.example` to `.env`.
-2. Set the database line to our PostgreSQL database:
+2. Set the database line to our PostgreSQL database — the same one the NIS server and admin portal use. Its address, user and password are in the server project's `src/main/resources/application.yaml` under `spring.datasource` (`jdbc:postgresql://HOST:5432/DB` becomes `postgres://USER:PASSWORD@HOST:5432/DB`):
    ```
    DATABASE_URL=postgres://USER:PASSWORD@DB_HOST:5432/DB_NAME
-   NIS_API_URL=https://YOUR-NIS-SERVER/api/nis-portal     # optional
+   NIS_API_URL=https://YOUR-NIS-SERVER/api/nis-portal     # recommended
    ```
-3. Export the data and publish:
+3. Refresh the website with one command:
    ```bash
-   npm run export:data        # reads .env, rewrites public/data/
-   npm run deploy:pages       # updates the website
-   git add public/data && git commit -m "Refresh data" && git push
+   npm run refresh
    ```
+   This exports the approved data from the database (`npm run export:data`), saves the new snapshot in `public/data/` to GitHub, and republishes the website (`npm run deploy:pages`).
 
-`NIS_API_URL` is optional. With it, each table keeps the official layout produced by the NIS server; without it, tables are exported as plain rows. The export is done by `scripts/export-data.mjs`.
+Set `NIS_API_URL` too: it lets each table keep the official layout produced by the NIS server. Without it, tables are published as plain rows. The export is done by `scripts/export-data.mjs`.
 
 Use a read-only database account:
 
@@ -63,6 +62,25 @@ VITE_API_BASE_URL=https://YOUR-NIS-SERVER/api/nis-portal
 ```
 
 The server must use HTTPS, and its `cors.allowed-origins` setting must include the website's address. Only the tables become live; the home page figures, theme lists and map still come from the snapshot, so keep refreshing it.
+
+## Adding new data with Excel
+
+New data is entered through the **existing NIS admin portal**, not through this website. No code changes are needed for this.
+
+1. **Upload**: sign in to the admin portal → **Data Management → Dataset** → open the dataset → **Add data** → choose the Excel file filled in with that dataset's template. The server reads the file into the dataset's table and marks it **Pending**.
+2. **Approve**: a reviewer opens **Approval Management**, checks the upload and clicks **Approve**. Only approved uploads are public.
+3. **Publish**: run `npm run refresh` (or let the scheduled refresh below do it). The new figures appear on the website within a few minutes, including the home-page figures and the province map if the upload belongs to their tables.
+
+To publish approvals automatically, schedule `npm run refresh` every night (cron on Linux, Task Scheduler on Windows) on a computer that has this project, the `.env` file, Node.js, and permission to push to GitHub.
+
+### When code changes are needed
+
+| Situation | Code change? |
+|---|---|
+| New year or month for an existing table, corrections, re-uploads | **No.** Upload, approve, refresh. |
+| A new ministry or agency | Small: add it in the admin portal, then add its English name to `scripts/meta/categories.json` and its theme to `scripts/meta/themes.json`. |
+| A completely new table (new Excel template) | **Yes, on the NIS server.** A developer adds the database table, a reader for the Excel file (`app/nisXX/migrator/…MigratorService.kt`) and a display layout (`app/nisXX/inquiry/…InquiryService.kt`), then registers the dataset in the admin portal. This website picks the table up automatically on the next refresh; add its English title to `scripts/meta/datasets.en.json`. |
+| A new home-page figure or map figure | Small: add its SQL query to `scripts/indicators.config.mjs`. |
 
 ## How to add your work
 
@@ -103,13 +121,7 @@ git pull
 npm run deploy:pages
 ```
 
-The site updates within one or two minutes. If the data was refreshed, also save the new snapshot:
-
-```bash
-git add public/data
-git commit -m "Refresh data"
-git push
-```
+The site updates within one or two minutes. For new data, `npm run refresh` does the export, the GitHub save and the publishing in one step.
 
 ## Where to change common things
 
