@@ -1,0 +1,25 @@
+// GitHub Codespaces: runs the NIS admin system (database, server, admin portal) in the browser.
+// Code -> Codespaces -> Create codespace on main, then follow the message in the terminal.
+{
+  "name": "NIS data system",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "hostRequirements": {
+    "cpus": 4,
+    "memory": "16gb"
+  },
+  "forwardPorts": [8080, 5173],
+  "portsAttributes": {
+    "8080": { "label": "Admin portal", "onAutoForward": "notify" },
+    "5173": { "label": "Website preview", "onAutoForward": "notify" }
+  },
+  "postCreateCommand": "npm ci --no-audit --no-fund",
+  "postAttachCommand": "bash system/welcome.sh",
+  "customizations": {
+    "codespaces": {
+      "openFiles": ["system/README.md"]
+    }
+  }
+}

@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kh.niswebportal.app.settings.role_permission.RolePermissionEbc">
+
+    <select id="countAllMenus"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        SELECT
+               COUNT(DISTINCT MENU_ID) AS "total"
+        FROM PERMISSIONS
+        WHERE STATUS   = '01'
+          AND MENU_ID IS NOT NULL
+        ]]>
+    </select>
+
+    <select id="retrieveAllMenus"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        SELECT
+               MENU_ID              AS "menuId"
+             , MENU_NAME            AS "menuName"
+             , COUNT(PERMISSION_ID) AS "permissionCount"
+        FROM PERMISSIONS
+        WHERE STATUS   = '01'
+          AND MENU_ID IS NOT NULL
+        GROUP BY MENU_ID
+               , MENU_NAME
+        ORDER BY MENU_ID
+        LIMIT #{limit} OFFSET #{offset}
+        ]]>
+    </select>
+
+    <select id="countAssignedMenusByRole"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        SELECT
+               COUNT(DISTINCT P.MENU_ID) AS "total"
+        FROM ROLE_PERMISSIONS RP
+        JOIN PERMISSIONS P ON P.PERMISSION_ID = RP.PERMISSION_ID
+        WHERE RP.ROLE_ID  = #{roleId}
+          AND P.STATUS    = '01'
+          AND P.MENU_ID  IS NOT NULL
+        ]]>
+    </select>
+
+    <select id="retrieveAssignedMenusByRole"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        SELECT
+               P.MENU_ID              AS "menuId"
+             , P.MENU_NAME            AS "menuName"
+             , COUNT(P.PERMISSION_ID) AS "permissionCount"
+        FROM ROLE_PERMISSIONS RP
+        JOIN PERMISSIONS P ON P.PERMISSION_ID = RP.PERMISSION_ID
+        WHERE RP.ROLE_ID  = #{roleId}
+          AND P.STATUS    = '01'
+          AND P.MENU_ID  IS NOT NULL
+        GROUP BY P.MENU_ID
+               , P.MENU_NAME
+        ORDER BY P.MENU_ID
+        LIMIT #{limit} OFFSET #{offset}
+        ]]>
+    </select>
+
+    <select id="countAllPermissionsByMenu"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        SELECT
+               COUNT(*) AS "total"
+        FROM PERMISSIONS
+        WHERE MENU_ID = #{menuId}
+          AND STATUS  = '01'
+          AND (NULLIF(#{permissionId}, '') IS NULL OR PERMISSION_ID ILIKE '%' || #{permissionId} || '%')
+        ]]>
+    </select>
+
+    <select id="retrieveAllPermissionsByMenu"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        SELECT
+               PERMISSION_ID AS "permissionId"
+             , NAME          AS "name"
+             , REMARK        AS "description"
+             , MENU_ID       AS "menuId"
+             , MENU_NAME     AS "menuName"
+        FROM PERMISSIONS
+        WHERE MENU_ID = #{menuId}
+          AND STATUS  = '01'
+          AND (NULLIF(#{permissionId}, '') IS NULL OR PERMISSION_ID ILIKE '%' || #{permissionId} || '%')
+        ORDER BY PERMISSION_ID
+        LIMIT #{limit} OFFSET #{offset}
+        ]]>
+    </select>
+
+    <select id="countAssignedPermissionsByRoleAndMenu"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        SELECT
+               COUNT(*) AS "total"
+        FROM ROLE_PERMISSIONS RP
+        JOIN PERMISSIONS P ON P.PERMISSION_ID = RP.PERMISSION_ID
+        WHERE RP.ROLE_ID = #{roleId}
+          AND P.MENU_ID  = #{menuId}
+          AND P.STATUS   = '01'
+          AND (NULLIF(#{permissionId}, '') IS NULL OR P.PERMISSION_ID ILIKE '%' || #{permissionId} || '%')
+        ]]>
+    </select>
+
+    <select id="retrieveAssignedPermissionsByRoleAndMenu"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        SELECT
+               P.PERMISSION_ID AS "permissionId"
+             , P.NAME          AS "name"
+             , P.REMARK        AS "description"
+             , P.MENU_ID       AS "menuId"
+             , P.MENU_NAME     AS "menuName"
+        FROM ROLE_PERMISSIONS RP
+        JOIN PERMISSIONS P ON P.PERMISSION_ID = RP.PERMISSION_ID
+        WHERE RP.ROLE_ID = #{roleId}
+          AND P.MENU_ID  = #{menuId}
+          AND P.STATUS   = '01'
+          AND (NULLIF(#{permissionId}, '') IS NULL OR P.PERMISSION_ID ILIKE '%' || #{permissionId} || '%')
+        ORDER BY P.PERMISSION_ID
+        LIMIT #{limit} OFFSET #{offset}
+        ]]>
+    </select>
+
+    <insert id="registerPermissionToRole"
+            parameterType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+    INSERT INTO ROLE_PERMISSIONS (
+        ROLE_ID,
+        PERMISSION_ID,
+        PROCESS_TIMESTAMP,
+        STATUS,
+        FIRST_REGISTER_BRANCH,
+        FIRST_REGISTER_USER,
+        FIRST_REGISTER_DATE,
+        FIRST_REGISTER_TIME,
+        LAST_CHANGE_BRANCH,
+        LAST_CHANGE_USER,
+        LAST_CHANGE_DATE,
+        LAST_CHANGE_TIME
+    ) VALUES (
+        #{roleId},
+        #{permissionId},
+        COALESCE(#{processTimestamp}, now()),
+        COALESCE(#{status}, '01'),
+        #{firstRegisterBranch},
+        #{firstRegisterUser},
+        #{firstRegisterDate},
+        #{firstRegisterTime},
+        #{lastChangeBranch},
+        #{lastChangeUser},
+        #{lastChangeDate},
+        #{lastChangeTime}
+    )
+    ON CONFLICT (ROLE_ID, PERMISSION_ID) DO NOTHING
+    ]]>
+    </insert>
+
+    <delete id="removePermissionFromRole"
+            parameterType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        DELETE FROM ROLE_PERMISSIONS
+         WHERE ROLE_ID       = #{roleId}
+           AND PERMISSION_ID = #{permissionId}
+        ]]>
+    </delete>
+
+    <delete id="deleteRolePermissions" parameterType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+    DELETE FROM ROLE_PERMISSIONS
+     WHERE ROLE_ID = #{roleId}
+    ]]>
+    </delete>
+</mapper>

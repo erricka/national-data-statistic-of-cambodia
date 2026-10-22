@@ -1,0 +1,279 @@
+{
+  "info": {
+    "_postman_id": "a9c1e7d2-45e8-48bc-b2cf-99b4d8312e01",
+    "name": "NIS Web Portal - Approval Workflow APIs",
+    "description": "Collection of APIs for managing Excel data upload approvals, previews, Maker-Checker reviews, and audit trails.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8010/api/nis-portal",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "your_jwt_token_here",
+      "type": "string"
+    },
+    {
+      "key": "sampleUploadId",
+      "value": "nis_05a1_7b6f3c1d-6a5e-4c7b-b0b1-382a869818a7",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Retrieve Pending / Approval List",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"03\",\n  \"sourceId\": \"\",\n  \"search\": \"\",\n  \"page\": 1,\n  \"size\": 10\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/APPI001",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "APPI001"
+          ]
+        },
+        "description": "Fetch list of approval requests with pagination and status filter.\n- Status '03': Pending Approval\n- Status '01': Approved\n- Status '02': Rejected\n- Status '04': Cancelled"
+      },
+      "response": []
+    },
+    {
+      "name": "2. Retrieve Approval Detail",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"uploadId\": \"{{sampleUploadId}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/APPI002",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "APPI002"
+          ]
+        },
+        "description": "Get detailed metadata for a specific upload batch."
+      },
+      "response": []
+    },
+    {
+      "name": "3. Preview Staged Data",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"sourceId\": \"nis_05a1\",\n  \"uploadId\": \"{{sampleUploadId}}\",\n  \"page\": 1,\n  \"size\": 50\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/APPI003",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "APPI003"
+          ]
+        },
+        "description": "Preview table rows and headers of uploaded Excel data before approving."
+      },
+      "response": []
+    },
+    {
+      "name": "4. Approve Upload",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"uploadId\": \"{{sampleUploadId}}\",\n  \"comment\": \"Verified dataset numbers and approved for production.\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/APPR001",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "APPR001"
+          ]
+        },
+        "description": "Approve a pending upload. Submitter cannot approve their own upload (Maker-Checker rule)."
+      },
+      "response": []
+    },
+    {
+      "name": "5. Reject Upload",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"uploadId\": \"{{sampleUploadId}}\",\n  \"reason\": \"Incorrect totals found in Row 15. Please recheck and re-upload.\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/APPR002",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "APPR002"
+          ]
+        },
+        "description": "Reject a pending upload with a mandatory reason."
+      },
+      "response": []
+    },
+    {
+      "name": "6. Cancel Upload (by Submitter)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"uploadId\": \"{{sampleUploadId}}\",\n  \"reason\": \"Uploaded incorrect file version by mistake.\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/APPR003",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "APPR003"
+          ]
+        },
+        "description": "Cancel an upload request (can only be done by the user who uploaded it)."
+      },
+      "response": []
+    },
+    {
+      "name": "7. Retrieve Approval Audit Trail",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"uploadId\": \"{{sampleUploadId}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/APPI004",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "APPI004"
+          ]
+        },
+        "description": "Retrieve full history of actions (SUBMITTED, APPROVED, REJECTED, CANCELLED) with timestamps and actors."
+      },
+      "response": []
+    }
+  ]
+}

@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kh.niswebportal.app.approval.ApprovalEbc">
+
+    <select id="retrieveApprovalList"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        SELECT
+              dh.history_id           AS "historyId"
+            , dh.upload_id            AS "uploadId"
+            , dh.source_id            AS "sourceId"
+            , COALESCE(dh.upload_file_name, d.source_name, dh.source_id) AS "title"
+            , d.source_name           AS "sourceName"
+            , d.table_name            AS "tableName"
+            , c.category_id           AS "categoryId"
+            , c.description           AS "categoryDescription"
+            , dh.description          AS "description"
+            , dh.file_path            AS "filePath"
+            , dh.status               AS "status"
+            , CASE dh.status
+                WHEN '01' THEN 'APPROVED'
+                WHEN '02' THEN 'REJECTED'
+                WHEN '03' THEN 'PENDING_APPROVAL'
+                WHEN '04' THEN 'CANCELLED'
+                ELSE 'UNKNOWN'
+              END                     AS "statusLabel"
+            , COALESCE(dh.first_register_user, d.owner_id, 'SYSTEM') AS "submittedBy"
+            , dh.archived_at          AS "submittedAt"
+            , get_upload_record_count(d.table_name, dh.upload_id) AS "totalRecords"
+        FROM datasource_history dh
+        LEFT JOIN datasource d ON dh.source_id = d.source_id
+        LEFT JOIN category c ON d.category_id = c.category_id
+                WHERE 1 = 1
+          AND (
+                NULLIF(#{status}, '') IS NULL
+                OR dh.status = #{status}
+          )
+          AND (
+                NULLIF(#{sourceId}, '') IS NULL
+                OR dh.source_id = #{sourceId}
+          )
+          AND (
+                NULLIF(#{search}, '') IS NULL
+                OR dh.source_id ILIKE '%' || #{search} || '%'
+                OR dh.upload_file_name ILIKE '%' || #{search} || '%'
+                OR d.source_name ILIKE '%' || #{search} || '%'
+                OR c.description ILIKE '%' || #{search} || '%'
+          )
+        ORDER BY dh.archived_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+        ]]>
+    </select>
+
+    <select id="countApprovalList"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        SELECT COUNT(*) AS "total"
+        FROM datasource_history dh
+        LEFT JOIN datasource d ON dh.source_id = d.source_id
+        LEFT JOIN category c ON d.category_id = c.category_id
+        WHERE 1 = 1
+          AND (
+                NULLIF(#{status}, '') IS NULL
+                OR dh.status = #{status}
+          )
+          AND (
+                NULLIF(#{sourceId}, '') IS NULL
+                OR dh.source_id = #{sourceId}
+          )
+          AND (
+                NULLIF(#{search}, '') IS NULL
+                OR dh.source_id ILIKE '%' || #{search} || '%'
+                OR dh.upload_file_name ILIKE '%' || #{search} || '%'
+                OR d.source_name ILIKE '%' || #{search} || '%'
+                OR c.description ILIKE '%' || #{search} || '%'
+          )
+        ]]>
+    </select>
+
+    <select id="retrieveApprovalDetail"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        SELECT
+              dh.history_id           AS "historyId"
+            , dh.upload_id            AS "uploadId"
+            , dh.source_id            AS "sourceId"
+            , COALESCE(dh.upload_file_name, d.source_name, dh.source_id) AS "title"
+            , d.source_name           AS "sourceName"
+            , d.table_name            AS "tableName"
+            , c.category_id           AS "categoryId"
+            , c.description           AS "categoryDescription"
+            , dh.description          AS "description"
+            , dh.file_path            AS "filePath"
+            , dh.status               AS "status"
+            , CASE dh.status
+                WHEN '01' THEN 'APPROVED'
+                WHEN '02' THEN 'REJECTED'
+                WHEN '03' THEN 'PENDING_APPROVAL'
+                WHEN '04' THEN 'CANCELLED'
+                ELSE 'UNKNOWN'
+              END                     AS "statusLabel"
+            , COALESCE(dh.first_register_user, d.owner_id, 'SYSTEM') AS "submittedBy"
+            , dh.archived_at          AS "submittedAt"
+            , dh.row_data             AS "rawData"
+        FROM datasource_history dh
+        LEFT JOIN datasource d ON dh.source_id = d.source_id
+        LEFT JOIN category c ON d.category_id = c.category_id
+        WHERE dh.upload_id = #{uploadId}
+        LIMIT 1
+        ]]>
+    </select>
+
+    <update id="updateDatasourceHistoryStatus"
+            parameterType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        UPDATE datasource_history
+           SET status           = #{status}
+             , last_change_user = #{lastChangeUser}
+             , last_change_date = #{lastChangeDate}
+             , last_change_time = #{lastChangeTime}
+         WHERE upload_id = #{uploadId}
+        ]]>
+    </update>
+
+    <update id="supersedePreviousApprovedHistory"
+            parameterType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        UPDATE datasource_history
+           SET status           = '04'
+             , last_change_user = #{lastChangeUser}
+             , last_change_date = #{lastChangeDate}
+             , last_change_time = #{lastChangeTime}
+         WHERE source_id = #{sourceId}
+           AND upload_id != #{uploadId}
+           AND status = '01'
+        ]]>
+    </update>
+
+    <insert id="registerApprovalAudit"
+            parameterType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        INSERT INTO upload_approval_audit (
+              upload_id
+            , source_id
+            , action
+            , action_by
+            , action_date
+            , action_time
+            , previous_status
+            , new_status
+            , reason
+            , created_at
+        ) VALUES (
+              #{uploadId}
+            , #{sourceId}
+            , #{action}
+            , #{actionBy}
+            , #{firstRegisterDate}
+            , #{firstRegisterTime}
+            , #{previousStatus}
+            , #{newStatus}
+            , #{reason}
+            , NOW()
+        )
+        ]]>
+    </insert>
+
+    <select id="retrieveApprovalAuditTrail"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        SELECT
+              audit_id        AS "auditId"
+            , upload_id       AS "uploadId"
+            , source_id       AS "sourceId"
+            , action          AS "action"
+            , action_by       AS "actionBy"
+            , action_date     AS "actionDate"
+            , action_time     AS "actionTime"
+            , previous_status AS "previousStatus"
+            , new_status      AS "newStatus"
+            , reason          AS "reason"
+            , created_at      AS "createdAt"
+        FROM upload_approval_audit
+        WHERE upload_id = #{uploadId}
+        ORDER BY audit_id DESC
+        ]]>
+    </select>
+
+</mapper>

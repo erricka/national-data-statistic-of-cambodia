@@ -1,0 +1,446 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kh.niswebportal.app.datasource.DatasourceEbc">
+
+    <select id="listSources"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+      SELECT
+              SOURCE_ID             AS "sourceId"
+            , SOURCE_NAME           AS "sourceName"
+            , OWNER_ID              AS "ownerId"
+            , STATUS                AS "status"
+            , FIRST_REGISTER_BRANCH AS "firstRegisterBranch"
+            , FIRST_REGISTER_USER   AS "firstRegisterUser"
+            , FIRST_REGISTER_DATE   AS "firstRegisterDate"
+            , FIRST_REGISTER_TIME   AS "firstRegisterTime"
+            , LAST_CHANGE_BRANCH    AS "lastChangeBranch"
+            , LAST_CHANGE_USER      AS "lastChangeUser"
+            , LAST_CHANGE_DATE      AS "lastChangeDate"
+            , LAST_CHANGE_TIME      AS "lastChangeTime"
+        FROM DATASOURCE
+        WHERE STATUS = 'Y'
+          AND (
+                NULLIF(#{search}, '') IS NULL
+             OR SOURCE_ID   ILIKE '%' || #{search} || '%'
+             OR SOURCE_NAME ILIKE '%' || #{search} || '%'
+          )
+        ORDER BY FIRST_REGISTER_DATE DESC, FIRST_REGISTER_TIME DESC
+        LIMIT #{limit} OFFSET #{offset}
+    ]]>
+    </select>
+
+    <select id="countSources"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        SELECT COUNT(*) AS "total"
+        FROM DATASOURCE
+        WHERE STATUS = 'Y'
+          AND (
+                NULLIF(#{search}, '') IS NULL
+             OR SOURCE_ID   ILIKE '%' || #{search} || '%'
+             OR SOURCE_NAME ILIKE '%' || #{search} || '%'
+          )
+    ]]>
+    </select>
+
+    <select id="previewSourceData"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+            SELECT *
+            FROM   "#{tableName}"
+            LIMIT  #{limit}
+            OFFSET #{offset}
+        ]]>
+    </select>
+
+    <select id="countSourceData"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+            SELECT COUNT(*) AS "total"
+            FROM   "#{tableName}"
+        ]]>
+    </select>
+
+    <select id="retrieveSource"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+           SELECT
+                  SOURCE_ID             AS "sourceId"
+                , SOURCE_NAME           AS "sourceName"
+                , OWNER_ID              AS "ownerId"
+                , STATUS                AS "status"
+                , TABLE_NAME            AS "tableName"
+                , FIRST_REGISTER_BRANCH AS "firstRegisterBranch"
+                , FIRST_REGISTER_USER   AS "firstRegisterUser"
+                , FIRST_REGISTER_DATE   AS "firstRegisterDate"
+                , FIRST_REGISTER_TIME   AS "firstRegisterTime"
+                , LAST_CHANGE_BRANCH    AS "lastChangeBranch"
+                , LAST_CHANGE_USER      AS "lastChangeUser"
+                , LAST_CHANGE_DATE      AS "lastChangeDate"
+                , LAST_CHANGE_TIME      AS "lastChangeTime"
+            FROM DATASOURCE
+            WHERE SOURCE_ID = #{sourceId}
+        ]]>
+    </select>
+
+    <select id="retrieveRecentSource"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        select
+            d.source_id   as "source_id",
+            COALESCE(dh.upload_file_name,d.source_name)   as "source_name",
+            dh.upload_id   as "upload_id",
+            dh.upload_file_name as "upload_name",
+            c.description  as "category_description",
+            d.table_name   as "table_name",
+            pg.n_live_tup  as "total_record"
+        from datasource d
+        inner join category c on d.category_id = c.category_id
+        inner join pg_stat_user_tables pg on pg.relname = d.table_name
+        inner join datasource_history dh on d.source_id = dh.source_id
+        where d.table_name IS NOT NULL
+        AND d.table_name <> ''
+        AND dh.status = '01'
+        and dh.upload_file_name IS NOT null
+        order by dh.archived_at desc
+        limit 4
+        ]]>
+    </select>
+
+    <select id="retrieveSourceByName"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        select
+            d.source_id                                 as "source_id",
+            COALESCE(dh.upload_file_name,d.source_name) as "title",
+            dh.upload_id                                as "upload_id",
+            c.description                               as "category_description",
+            'xlsx'                                      as "file_extention"
+        from datasource d
+        inner join category c on d.category_id = c.category_id
+        inner join datasource_history dh on d.source_id = dh.source_id 
+        where d.table_name IS NOT NULL
+        AND d.table_name <> ''
+        AND dh.status = '01'
+        AND ( d.source_name ilike '%'|| #{search}|| '%' or c.description ilike '%'|| #{search}|| '%' or dh.upload_file_name ilike '%'|| #{search}|| '%'  )
+        order by c.category_id asc, d.sort_order asc
+        ]]>
+    </select>
+
+    <select id="retrieveSourceByCategory"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        SELECT
+            d.source_id                                 AS "source_id",
+            d.source_name                               AS "source_name",
+            c.description                               AS "category_description"
+        FROM datasource d
+        INNER JOIN category c ON d.category_id = c.category_id
+        WHERE d.table_name IS NOT NULL
+          AND d.table_name <> ''
+          AND d.status ='Y'
+          AND (
+              NULLIF(#{categoryId}::text, '') IS NULL
+              OR c.category_id = NULLIF(#{categoryId}::text, '')::int
+          )
+          order by d.sort_order ASC;
+        ]]>
+    </select>
+
+    <select id="retrieveSourceById"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        select
+            d.source_id   as "source_id",
+            d.source_name as "title",
+            c.description as "category_description",
+            'xlsx'        as "file_extention"
+        from datasource d
+        inner join category c on d.category_id = c.category_id
+        where d.table_name IS NOT NULL
+        AND d.table_name <> ''
+        AND d.source_id = #{sourceId}
+        ]]>
+    </select>
+
+    <insert id="registerSource" parameterType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        INSERT INTO DATASOURCE (
+              SOURCE_ID
+            , SOURCE_NAME
+            , OWNER_ID
+            , STATUS
+            , FIRST_REGISTER_BRANCH
+            , FIRST_REGISTER_USER
+            , FIRST_REGISTER_DATE
+            , FIRST_REGISTER_TIME
+            , LAST_CHANGE_BRANCH
+            , LAST_CHANGE_USER
+            , LAST_CHANGE_DATE
+            , LAST_CHANGE_TIME
+        ) VALUES (
+              #{sourceId}
+            , #{sourceName}
+            , #{ownerId}
+            , 'Y'
+            , #{firstRegisterBranch}
+            , #{firstRegisterUser}
+            , #{firstRegisterDate}
+            , #{firstRegisterTime}
+            , #{lastChangeBranch}
+            , #{lastChangeUser}
+            , #{lastChangeDate}
+            , #{lastChangeTime}
+        )
+    ]]>
+    </insert>
+
+    <update id="updateSource" parameterType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        UPDATE DATASOURCE
+           SET SOURCE_NAME        = #{sourceName}
+             , OWNER_ID           = #{ownerId}
+             , LAST_CHANGE_BRANCH = #{lastChangeBranch}
+             , LAST_CHANGE_USER   = #{lastChangeUser}
+             , LAST_CHANGE_DATE   = #{lastChangeDate}
+             , LAST_CHANGE_TIME   = #{lastChangeTime}
+         WHERE SOURCE_ID = #{sourceId}
+        ]]>
+    </update>
+
+    <delete id="deleteSource" parameterType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        DELETE FROM DATASOURCE
+         WHERE SOURCE_ID = #{sourceId}
+        ]]>
+    </delete>
+
+    <insert id="registerUploadLog" parameterType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        INSERT INTO DATASOURCE_UPLOAD_LOG (
+              UPLOAD_ID
+            , SOURCE_ID
+            , TOTAL_ROWS
+            , SNAPSHOT_PATH
+            , UPLOAD_MODE
+            , STATUS
+            , STARTED_AT
+            , FIRST_REGISTER_USER
+            , FIRST_REGISTER_DATE
+            , FIRST_REGISTER_TIME
+            , LAST_CHANGE_USER
+            , LAST_CHANGE_DATE
+            , LAST_CHANGE_TIME
+        ) VALUES (
+              #{uploadId}
+            , #{sourceId}
+            , #{totalRows}
+            , #{snapshotPath}
+            , #{uploadMode}
+            , 'PROCESSING'
+            , NOW()
+            , COALESCE(#{firstRegisterUser},'000000')
+            , COALESCE(#{firstRegisterDate},'20260101')
+            , COALESCE(#{firstRegisterTime},'000000')
+            , COALESCE(#{lastChangeUser},'99999')
+            , COALESCE(#{lastChangeDate},'20260101')
+            , COALESCE(#{lastChangeTime},'000000')
+        )
+    ]]>
+    </insert>
+
+    <update id="completeUploadLog" parameterType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        UPDATE DATASOURCE_UPLOAD_LOG
+           SET STATUS       = 'COMPLETED'
+             , COMPLETED_AT = NOW()
+         WHERE UPLOAD_ID = #{uploadId}
+        ]]>
+    </update>
+
+    <update id="updateUploadLogTotalRows" parameterType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        UPDATE DATASOURCE_UPLOAD_LOG
+           SET TOTAL_ROWS = #{totalRows}
+         WHERE UPLOAD_ID  = #{uploadId}
+        ]]>
+    </update>
+
+
+    <select id="listUploadHistory"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        SELECT
+              UPLOAD_ID     AS "uploadId"
+            , SOURCE_ID     AS "sourceId"
+            , TOTAL_ROWS    AS "totalRows"
+            , SNAPSHOT_PATH AS "snapshotPath"
+            , UPLOAD_MODE   AS "uploadMode"
+            , STATUS        AS "status"
+            , STARTED_AT    AS "startedAt"
+            , COMPLETED_AT  AS "completedAt"
+        FROM DATASOURCE_UPLOAD_LOG
+        WHERE SOURCE_ID = #{sourceId}
+        ORDER BY STARTED_AT DESC
+        ]]>
+    </select>
+
+    <insert id="registerDatasourceHistory" parameterType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        INSERT INTO DATASOURCE_HISTORY (
+            HISTORY_ID,
+            SOURCE_ID,
+            UPLOAD_ID,
+            ROW_DATA,
+            ARCHIVED_AT,
+            FILE_PATH ,
+            UPLOAD_FILE_NAME,
+            DESCRIPTION,
+            STATUS
+        )
+        VALUES (
+            nextval('datasource_history_history_id_seq'),
+            #{sourceId},
+            #{uploadId},
+            COALESCE(
+                NULLIF(#{rawData}, '')::jsonb,
+                '{}'::jsonb
+            ),
+            now(),
+            COALESCE(#{filePath}, ''),
+            COALESCE(#{uploadFileName}, ''),
+            COALESCE(#{description}, ''),
+            '03'
+        );
+    ]]>
+    </insert>
+
+    <select id="retrieveDatasourceByCategory"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        select
+            d.source_id as "sourceId",
+            dh.upload_id as "upload_id",
+            COALESCE(d.source_name,'') as "title",
+            c.description as "categoryDescription",
+            pg.n_live_tup as "totalRecord"
+            from datasource d
+        inner join category c on d.category_id = c.category_id
+        inner join pg_stat_user_tables pg on pg.relname = d.table_name
+        inner join lateral (
+			    select upload_id
+			    from datasource_history
+			    where source_id = d.source_id
+			    and status ='01'
+			    order by archived_at  desc -- ⚠️ REPLACE 'created_at' with your actual date/ID column
+			    limit 1
+			) dh on true
+        where d.table_name IS NOT null
+            AND d.table_name <> ''
+            and c.category_id = #{categoryId}
+            AND ( d.source_name ilike '%'|| #{search}|| '%' or c.description ilike '%'|| #{search}|| '%' )
+            AND d.status ='Y'
+            ORDER BY d.sort_order ASC
+            LIMIT #{limit} OFFSET #{offset}
+        ]]>
+    </select>
+
+    <select id="countDatasourceByCategory"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        select
+            COUNT(*) AS "total"
+            from datasource d
+        inner join category c on d.category_id = c.category_id
+        inner join pg_stat_user_tables pg on pg.relname = d.table_name
+        inner join datasource_history dh on d.source_id = dh.source_id
+            where d.table_name IS NOT null
+            AND d.table_name <> ''
+            AND dh.status = '01'
+            and c.category_id = #{categoryId}
+            AND ( d.source_name ilike '%'|| #{search}|| '%' or c.description ilike '%'|| #{search}|| '%' )
+        ]]>
+    </select>
+
+
+    <select id="retrieveDatasourceManagementPage"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+         select
+            d.source_id as "sourceId",
+            dh.upload_id as "upload_id",
+            COALESCE(dh.upload_file_name,d.source_name) as "title",
+            c.category_name as "categoryDescription",
+            pg.n_live_tup as "totalRecord",
+            dh.archived_at::date as "lastChangeDate"
+            from datasource d
+        inner join category c on d.category_id = c.category_id
+        inner join pg_stat_user_tables pg on pg.relname = d.table_name
+        inner join datasource_history dh on d.source_id = dh.source_id
+        where d.table_name IS NOT null
+            AND d.table_name <> ''
+            AND dh.status = '01'
+            AND (
+              NULLIF(#{categoryId}::text, '') IS NULL
+              OR c.category_id = NULLIF(#{categoryId}::text, '')::int
+          	)
+            AND ( d.source_name ilike '%'|| #{search}|| '%' or c.description ilike '%'|| #{search}|| '%' )
+            ORDER BY dh.archived_at::date DESC
+            LIMIT #{limit} OFFSET #{offset}
+        ]]>
+    </select>
+
+    <select id="countDatasourceManagementPage"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+         select
+            COUNT(*) AS "total"
+            from datasource d
+        inner join category c on d.category_id = c.category_id
+        inner join pg_stat_user_tables pg on pg.relname = d.table_name
+        inner join datasource_history dh on d.source_id = dh.source_id
+        where d.table_name IS NOT null
+            AND d.table_name <> ''
+            AND dh.status = '01'
+            AND (
+              NULLIF(#{categoryId}::text, '') IS NULL
+              OR c.category_id = NULLIF(#{categoryId}::text, '')::int
+          	)
+            AND ( d.source_name ilike '%'|| #{search}|| '%' or c.description ilike '%'|| #{search}|| '%' )
+
+        ]]>
+    </select>
+
+    <select id="retrieveDatasourceHistorySummaryForDashBoardPage"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+    SELECT
+          COUNT(*)                                          AS "totalRecords"
+        , COUNT(*) FILTER (WHERE STATUS = '01')             AS "totalPublished"
+        , COUNT(*) FILTER (
+              WHERE STATUS = '01'
+                AND ARCHIVED_AT >= DATE_TRUNC('month', CURRENT_DATE)
+                AND ARCHIVED_AT <  DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month'
+          )                                                 AS "publishedThisMonth"
+    FROM DATASOURCE_HISTORY
+    ]]>
+    </select>
+
+</mapper>

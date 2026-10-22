@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kh.niswebportal.app.settings.user_role.UserRoleEbc">
+
+
+    <select id="retrieveRolesByUserID"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        SELECT
+               R.ROLE_ID          AS "roleId"
+             , R.NAME             AS "name"
+             , R.REMARK           AS "description"
+             , UR.STATUS          AS "status"
+             , UR.EFFECTIVE_DATE  AS "effectiveDate"
+        FROM USER_ROLES UR
+        JOIN ROLES R ON R.ROLE_ID = UR.ROLE_ID
+        WHERE UR.USER_ID = #{userID}
+          AND (NULLIF(#{status}, '') IS NULL OR UR.STATUS = #{status})
+          AND R.STATUS = '01'
+        ORDER BY R.ROLE_ID
+        ]]>
+    </select>
+
+    <insert id="registerRoleToUser"
+            parameterType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        INSERT INTO USER_ROLES (
+               USER_ID
+             , ROLE_ID
+             , PROCESS_TIMESTAMP
+             , STATUS
+             , EFFECTIVE_DATE
+             , FIRST_REGISTER_BRANCH
+             , FIRST_REGISTER_USER
+             , FIRST_REGISTER_DATE
+             , FIRST_REGISTER_TIME
+             , LAST_CHANGE_BRANCH
+             , LAST_CHANGE_USER
+             , LAST_CHANGE_DATE
+             , LAST_CHANGE_TIME
+        ) VALUES (
+               #{userID}
+             , #{roleId}
+             , now()
+             , NULLIF(#{status}, '')
+             , NULLIF(#{effectiveDate}, '')
+             , #{firstRegisterBranch}
+             , #{firstRegisterUser}
+             , #{firstRegisterDate}
+             , #{firstRegisterTime}
+             , #{lastChangeBranch}
+             , #{lastChangeUser}
+             , #{lastChangeDate}
+             , #{lastChangeTime}
+        )
+    ]]>
+    </insert>
+
+    <delete id="deleteRoleFromUser"
+            parameterType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        DELETE FROM USER_ROLES
+         WHERE USER_ID = #{userID}
+           AND ROLE_ID = #{roleId}
+        ]]>
+    </delete>
+
+    <select id="retrievePermissionsByUserID"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        SELECT DISTINCT
+               P.PERMISSION_ID AS "permissionId"
+             , P.NAME          AS "name"
+             , P.REMARK        AS "description"
+        FROM USER_ROLES UR
+        JOIN ROLES R             ON R.ROLE_ID       = UR.ROLE_ID
+        JOIN ROLE_PERMISSIONS RP ON RP.ROLE_ID      = UR.ROLE_ID
+        JOIN PERMISSIONS P       ON P.PERMISSION_ID = RP.PERMISSION_ID
+        WHERE UR.USER_ID = #{userID}
+          AND (NULLIF(#{status}, '') IS NULL OR UR.STATUS = '01')
+          AND R.STATUS = '01'
+          AND P.STATUS = '01'
+        ORDER BY P.PERMISSION_ID
+        ]]>
+    </select>
+
+</mapper>

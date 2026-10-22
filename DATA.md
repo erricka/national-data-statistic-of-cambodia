@@ -10,6 +10,7 @@ I rebuilt the public website of the National Institute of Statistics as a new po
 - **English titles for all 352 tables**; agency names in both languages.
 - **A data export step**: the website reads a snapshot of the published statistics instead of connecting to the database directly.
 - **Live on GitHub Pages**: https://erricka.github.io/national-data-statistic-of-cambodia/
+- **The NIS server and admin portal are in this repository too** (`server/`, `admin-portal/`), with passwords removed, and run in the browser with GitHub Codespaces: see [system/README.md](system/README.md). The database is not in the repository.
 
 The old website addresses (`/detail/...`, `/categories`, `/data-explore`) still work and redirect to the new pages.
 
@@ -73,7 +74,7 @@ New data is entered through the **existing NIS admin portal**, not through this 
 
 > **Each approved upload replaces the previous data of that table** — the server marks the earlier upload as cancelled. Always upload the **complete table** (all years) using the table's template, not just the new rows.
 
-**Practice system.** A complete copy of the NIS system (database, server and admin portal) that runs on one computer with Docker Desktop, with a `publish.bat` that updates this website, is available from the project owner. It is not in this repository because it contains the full database, including staff accounts.
+**Admin system in the browser.** The server and admin portal in this repository run in GitHub Codespaces, with nothing to install: **Code → Codespaces → Create codespace**, drag the database file into `system/database/private`, run `bash system/start.sh`, and publish with `bash system/publish.sh`. Step by step: [system/README.md](system/README.md). The database file (`01-nis-data.sql.gz`) comes privately from the project owner; it is never put on GitHub because it contains staff accounts. The same system also runs on any computer with Docker, and the Docker Desktop practice zip still works.
 
 To publish approvals automatically, schedule `npm run refresh` every night (cron on Linux, Task Scheduler on Windows) on a computer that has this project, the `.env` file, Node.js, and permission to push to GitHub.
 
@@ -83,7 +84,7 @@ To publish approvals automatically, schedule `npm run refresh` every night (cron
 |---|---|
 | New year or month for an existing table, corrections, re-uploads | **No.** Upload, approve, refresh. |
 | A new ministry or agency | Small: add it in the admin portal, then add its English name to `scripts/meta/categories.json` and its theme to `scripts/meta/themes.json`. |
-| A completely new table (new Excel template) | **Yes, on the NIS server.** A developer adds the database table, a reader for the Excel file (`app/nisXX/migrator/…MigratorService.kt`) and a display layout (`app/nisXX/inquiry/…InquiryService.kt`), then registers the dataset in the admin portal. This website picks the table up automatically on the next refresh; add its English title to `scripts/meta/datasets.en.json`. |
+| A completely new table (new Excel template) | **Yes, on the NIS server** (`server/`). A developer adds the database table, a reader for the Excel file (`server/src/main/kotlin/…/app/nisXX/migrator/…MigratorService.kt`) and a display layout (`…/app/nisXX/inquiry/…InquiryService.kt`), then registers the dataset in the admin portal. This website picks the table up automatically on the next refresh; add its English title to `scripts/meta/datasets.en.json`. |
 | A new home-page figure or map figure | Small: add its SQL query to `scripts/indicators.config.mjs`. |
 
 ## How to add your work
@@ -117,7 +118,9 @@ Then open a **pull request** on GitHub, ask someone to review it, and merge it i
 
 ### Publishing to the website
 
-The website updates **automatically**: every change saved to the `main` branch — a merged pull request, a file edited on github.com, or new data from `npm run refresh` / `publish.bat` — is rebuilt and published within about two minutes by the *Deploy website* job (`.github/workflows/deploy-pages.yml`). To republish by hand, open the **Actions** tab → **Deploy website** → **Run workflow**.
+The website updates **automatically**: every change saved to the `main` branch — a merged pull request, a file edited on github.com, or new data from `bash system/publish.sh`, `npm run refresh` or `publish.bat` — is rebuilt and published within about two minutes by the *Deploy website* job (`.github/workflows/deploy-pages.yml`). To republish by hand, open the **Actions** tab → **Deploy website** → **Run workflow**.
+
+Changes only inside `server/`, `admin-portal/`, `system/` or `.devcontainer/` do not rebuild the website; they take effect the next time someone runs `bash system/start.sh` (it rebuilds the server and admin portal).
 
 Small text changes can be made directly on github.com: open the file, click the pencil icon, edit, and click **Commit changes**.
 
@@ -131,6 +134,9 @@ Small text changes can be made directly on github.com: open the file, click the 
 | Website text in English and Khmer | `src/i18n/strings.ts` |
 | Colours, spacing, layout | `src/styles/app.css` |
 | Pages | `src/pages/` |
+| NIS server (API, Excel readers, approvals) | `server/` (Kotlin, Spring Boot) |
+| Admin portal screens | `admin-portal/src/` (React) |
+| How the admin system runs in Codespaces | `system/`, `.devcontainer/devcontainer.json` |
 
 After editing anything in `scripts/`, run `npm run export:data` again so the snapshot picks up the change.
 

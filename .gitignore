@@ -7,3 +7,12 @@ dist
 .DS_Store
 logs
 *.log
+
+# Admin system: the database copy, generated logins and secrets never go to GitHub
+system/database/private/*
+!system/database/private/README.md
+system/.env
+server/build/
+server/.gradle/
+server/uploads/
+admin-portal/dist/

@@ -1,0 +1,58 @@
+# NIS admin system: database + NIS server + admin portal, built from this repository.
+# Start with:  bash system/start.sh      (see system/README.md)
+name: nis-system
+
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: nis
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-practice}
+      ADMIN_USER: ${ADMIN_USER:-nis-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+    ports:
+      - "127.0.0.1:15432:5432"   # used by system/publish.sh
+    volumes:
+      - db-data:/var/lib/postgresql
+      - ./database/init:/docker-entrypoint-initdb.d:ro   # runs on the very first start only
+      - ./database/private:/private:ro                   # your database file (never committed)
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d nis"]
+      interval: 5s
+      timeout: 5s
+      retries: 120
+      start_period: 30s
+    restart: unless-stopped
+
+  server:
+    build: ../server
+    image: nis-system-server
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/nis
+      DB_USERNAME: postgres
+      DB_PASSWORD: ${DB_PASSWORD:-practice}
+      RESET_PASSWORD: ${RESET_PASSWORD:-}
+      APPROVAL_INTERNAL_SECRET: ${APPROVAL_INTERNAL_SECRET:-change-me}
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  admin:
+    build: ../admin-portal
+    image: nis-system-admin
+    environment:
+      NIS_SERVER_URL: http://server:8010
+    ports:
+      - "8080:80"
+    depends_on:
+      - server
+    restart: unless-stopped
+
+volumes:
+  db-data:
+  uploads:

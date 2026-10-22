@@ -4,7 +4,7 @@ A new public statistics portal for the **National Institute of Statistics (NIS),
 
 It is a drop-in public front end for the existing NIS data platform (`nis-web-portal-server`): it reads the same approved data, speaks the same API, and keeps the old portal's URLs working.
 
-**Live site:** https://erricka.github.io/national-data-statistic-of-cambodia/ · **Team guide:** [DATA.md](DATA.md) — how the data flows, how to refresh it, and how to contribute and publish changes.
+**Live site:** https://erricka.github.io/national-data-statistic-of-cambodia/ · **Team guide:** [DATA.md](DATA.md) — how the data flows, how to refresh it, and how to contribute and publish changes · **Admin system:** [system/README.md](system/README.md) — the NIS server and admin portal, running in the browser with GitHub Codespaces.
 
 ![Home page](docs/screenshots/home.webp)
 
@@ -108,6 +108,32 @@ python3 scripts/tools/pgdump2sql.py nis-full.dump nis.sql
 createdb nis && psql -d nis -f nis.sql
 ```
 
+## Admin system (NIS server + admin portal)
+
+The repository also contains the NIS data platform the website reads from, with credentials removed:
+
+| Folder | |
+|---|---|
+| `server/` | NIS server (`nis-web-portal-server`): Kotlin, Spring Boot 4, MyBatis, Java 23. API under `/api/nis-portal`, Excel/CSV upload readers, approval workflow. |
+| `admin-portal/` | NIS admin portal (`nis-web-portal`): React, Vite. Upload, approval, users, categories, templates. |
+| `system/` | Docker Compose setup that runs PostgreSQL 18, the server and the admin portal, plus `start.sh`, `publish.sh`, `backup.sh`, `stop.sh` and `reset.sh`. |
+| `.devcontainer/` | GitHub Codespaces configuration (Docker in Docker, 4 cores / 16 GB). |
+
+The database is **not** included. Put a database file in `system/database/private/` (git-ignored) and run `bash system/start.sh`; see [system/README.md](system/README.md).
+
+Server settings come from environment variables (defaults in `server/src/main/resources/application.yaml`):
+
+| Variable | |
+|---|---|
+| `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` | PostgreSQL connection. |
+| `RESET_PASSWORD` | Temporary password set by *Reset password* in User Management. Resetting fails if unset. |
+| `APPROVAL_INTERNAL_SECRET`, `APPROVAL_EXECUTION_BASE_URL` | Internal call that applies an approved upload. |
+| `UPLOAD_DIR` | Folder for uploaded files. |
+| `CORS_ALLOWED_ORIGINS` | Browser origins allowed to call the API directly. |
+| `SEED_PASSWORD` | Password used by the user-seeding tests in `src/test`. |
+
+Changes under `server/`, `admin-portal/`, `system/` and `.devcontainer/` do not trigger the website deployment.
+
 ## Deployment
 
 The build is static files; any web server works as long as unknown paths serve `index.html` (a `404.html` copy is produced for hosts such as GitHub Pages).
@@ -148,6 +174,9 @@ src/
   styles/app.css           design system (tokens, components, responsive, print)
 public/data/               data snapshot read by the portal
 deploy/nginx.conf, Dockerfile
+server/                    NIS server (Kotlin, Spring Boot)
+admin-portal/              NIS admin portal (React)
+system/                    runs database + server + admin portal (Docker Compose, Codespaces)
 ```
 
 Stack: React 19, TypeScript, Vite, React Router, ECharts (loaded on demand), self-hosted Inter and Noto Sans Khmer.

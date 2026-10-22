@@ -9,15 +9,17 @@
  *
  * Safe to schedule (cron, Windows Task Scheduler) on a computer that can reach the
  * database and push to GitHub: when no approved data changed, nothing is committed
- * or published. `--force` republishes anyway; other arguments go to the export,
- * e.g. `npm run refresh -- --tables=db`.
+ * or published. `--force` republishes anyway; `--no-deploy` only saves the snapshot
+ * and leaves publishing to the "Deploy website" GitHub Action, which runs on every
+ * push to main. Other arguments go to the export, e.g. `npm run refresh -- --tables=db`.
  */
 import { execSync } from 'node:child_process'
 
 const run = (cmd) => execSync(cmd, { stdio: 'inherit' })
 const read = (cmd) => execSync(cmd, { encoding: 'utf8' }).trim()
 const force = process.argv.includes('--force')
-const exportArgs = process.argv.slice(2).filter((a) => a !== '--force').join(' ')
+const deploy = !process.argv.includes('--no-deploy')
+const exportArgs = process.argv.slice(2).filter((a) => a !== '--force' && a !== '--no-deploy').join(' ')
 
 run(`npm run export:data${exportArgs ? ` -- ${exportArgs}` : ''}`)
 
@@ -33,5 +35,9 @@ if (changed) {
   process.exit(0)
 }
 
-run('npm run deploy:pages')
-console.log('\nWebsite refreshed with the latest approved data.')
+if (deploy) {
+  run('npm run deploy:pages')
+  console.log('\nWebsite refreshed with the latest approved data.')
+} else if (changed) {
+  console.log('\nThe website rebuilds automatically and shows the new data in 1-2 minutes.')
+}

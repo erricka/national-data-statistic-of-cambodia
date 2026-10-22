@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kh.niswebportal.app.settings.user.UserEbc">
+
+    <select id="retrieveListUser"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        SELECT
+               U.USER_ID                 AS "userID"
+             , U.USER_STATUS             AS "userStatus"
+             , U.FIRST_NAME              AS "firstName"
+             , U.LAST_NAME               AS "lastName"
+             , U.EMAIL                   AS "email"
+             , ''                        AS "department"
+             , COALESCE(U.LAST_LOGIN,'') AS "lastLogin"
+        FROM USERS U
+        WHERE
+          (
+             (COALESCE(#{userStatus}, '00') = '00' AND U.USER_STATUS IN ('01', '09'))
+                OR
+             (COALESCE(#{userStatus}, '00') != '00' AND U.USER_STATUS = #{userStatus})
+          )
+          AND (
+                NULLIF(#{search}, '') IS NULL
+             OR U.USER_ID    ILIKE '%' || #{search} || '%'
+             OR U.FIRST_NAME ILIKE '%' || #{search} || '%'
+             OR U.LAST_NAME  ILIKE '%' || #{search} || '%'
+          )
+        ORDER BY U.PROCESS_TIMESTAMP DESC
+        LIMIT #{limit} OFFSET #{offset}
+    ]]>
+    </select>
+
+    <select id="countListUser"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+            SELECT COUNT(*) AS "total"
+                FROM USERS U
+            WHERE
+              (
+                 (COALESCE(#{userStatus}, '00') = '00' AND U.USER_STATUS IN ('01', '09'))
+                    OR
+                 (COALESCE(#{userStatus}, '00') != '00' AND U.USER_STATUS = #{userStatus})
+              )
+            AND (
+            NULLIF(#{search}, '') IS NULL
+             OR U.USER_ID    ILIKE '%' || #{search} || '%'
+             OR U.FIRST_NAME ILIKE '%' || #{search} || '%'
+             OR U.LAST_NAME  ILIKE '%' || #{search} || '%'
+          )
+    ]]>
+    </select>
+
+    <select id="retrieveUserByUserID"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+         SELECT
+               U.USER_ID                 AS "userID"
+             , U.USER_STATUS             AS "userStatus"
+             , U.FIRST_NAME              AS "firstName"
+             , U.LAST_NAME               AS "lastName"
+             , U.PASSWORD                AS "password"
+             , U.EMAIL                   AS "email"
+             , U.ENABLED                 AS "enabled"
+             , U.REQUIRES_PASSWORD_RESET AS "requiresPasswordReset"
+             , U.BRANCH_CODE             AS "branchCode"
+             , U.NON_LOCKED              AS "nonLocked"
+             , U.USER_TYPE               AS "userType"
+             , U.FAILED_LOGIN_ATTEMPTS   AS "failedLoginAttempts"
+             , U.EFFECTIVE_DATE          AS "effectiveDate"
+             , U.FIRST_REGISTER_USER     AS "firstRegisterUser"
+             , U.FIRST_REGISTER_DATE     AS "firstRegisterDate"
+             , U.LAST_CHANGE_DATE        AS "lastChangeDate"
+             , U.PROCESS_TIMESTAMP       AS "processTimestamp"
+        FROM USERS U
+        WHERE U.USER_ID = #{userID}
+    ]]>
+    </select>
+
+    <insert id="registerUser" parameterType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+      INSERT INTO USERS (
+         USER_ID,
+         USER_STATUS,
+         FIRST_NAME,
+         LAST_NAME,
+         PASSWORD,
+         EMAIL,
+         ENABLED,
+         REQUIRES_PASSWORD_RESET,
+         BRANCH_CODE,
+         NON_LOCKED,
+         USER_TYPE,
+         FAILED_LOGIN_ATTEMPTS,
+         FIRST_REGISTER_BRANCH,
+         FIRST_REGISTER_USER,
+         FIRST_REGISTER_DATE,
+         FIRST_REGISTER_TIME,
+         LAST_CHANGE_BRANCH,
+         LAST_CHANGE_USER,
+         LAST_CHANGE_DATE,
+         LAST_CHANGE_TIME,
+         EFFECTIVE_DATE,
+         LAST_LOGIN
+    ) VALUES (
+         #{userID},
+         COALESCE(NULLIF(#{userStatus}, ''), '01'),
+         #{firstName},
+         #{lastName},
+         #{password},
+         #{email},
+         COALESCE(#{enabled}, 'Y'),
+         COALESCE(#{requiresPasswordReset}, 'N'),
+         COALESCE(#{branchCode}, ''),
+         COALESCE(#{nonLocked}, 'N'),
+         COALESCE(#{userType}, 'SYSUSER'),
+         COALESCE(#{failedLoginAttempts}, '0'),
+         #{firstRegisterBranch},
+         #{firstRegisterUser},
+         #{firstRegisterDate},
+         #{firstRegisterTime},
+         #{lastChangeBranch},
+         #{lastChangeUser},
+         #{lastChangeDate},
+         #{lastChangeTime},
+         COALESCE(#{effectiveDate}::TIMESTAMP, CURRENT_TIMESTAMP),
+         COALESCE(#{lastLogin}, '')
+    )
+    ]]>
+    </insert>
+
+    <update id="updateUser"
+            parameterType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        UPDATE USERS
+           SET
+               FIRST_NAME              = COALESCE(#{firstName}, FIRST_NAME)
+             , LAST_NAME               = COALESCE(#{lastName}, LAST_NAME)
+             , PASSWORD                = COALESCE(#{password}, PASSWORD)
+             , EMAIL                   = COALESCE(#{email}, EMAIL)
+             , ENABLED                 = COALESCE(#{enabled}, ENABLED)
+             , REQUIRES_PASSWORD_RESET = COALESCE(#{requiresPasswordReset}, REQUIRES_PASSWORD_RESET)
+             , BRANCH_CODE             = COALESCE(#{branchCode}, BRANCH_CODE)
+             , NON_LOCKED              = COALESCE(#{nonLocked}, NON_LOCKED)
+             , USER_STATUS             = COALESCE(NULLIF(#{userStatus}, ''), USER_STATUS)
+             , USER_TYPE               = COALESCE(#{userType}, USER_TYPE)
+             , FAILED_LOGIN_ATTEMPTS   = COALESCE(#{failedLoginAttempts}, FAILED_LOGIN_ATTEMPTS)
+             , LAST_CHANGE_USER        = #{lastChangeUser}
+             , LAST_CHANGE_DATE        = #{lastChangeDate}
+             , LAST_CHANGE_TIME        = #{lastChangeTime}
+             , EFFECTIVE_DATE          = COALESCE(#{effectiveDate}::TIMESTAMP, EFFECTIVE_DATE)
+        WHERE USER_ID = #{userID}
+    ]]>
+    </update>
+
+    <delete id="deleteUserRoles"
+            parameterType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+            DELETE FROM USER_ROLES WHERE USER_ID = #{userID}
+        ]]>
+    </delete>
+
+    <insert id="registerUserRole"
+            parameterType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        INSERT INTO USER_ROLES (
+               USER_ID
+             , ROLE_ID
+             , FIRST_REGISTER_BRANCH
+             , FIRST_REGISTER_USER
+             , FIRST_REGISTER_DATE
+             , FIRST_REGISTER_TIME
+             , LAST_CHANGE_BRANCH
+             , LAST_CHANGE_USER
+             , LAST_CHANGE_DATE
+             , LAST_CHANGE_TIME
+        ) VALUES (
+               #{userID}
+             , #{roleId}
+             , #{firstRegisterBranch}
+             , #{firstRegisterUser}
+             , #{firstRegisterDate}
+             , #{firstRegisterTime}
+             , #{lastChangeBranch}
+             , #{lastChangeUser}
+             , #{lastChangeDate}
+             , #{lastChangeTime}
+        )
+    ]]>
+    </insert>
+
+    <update id="deleteUser"
+            parameterType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+            UPDATE USERS
+               SET
+                   USER_STATUS      = '09'
+                 , DELETED_BY       = #{deletedBy}
+                 , DELETED_DATE     = #{deletedDate}
+                 , DELETED_TIME     = #{deletedTime}
+                 , LAST_CHANGE_USER = #{lastChangeUser}
+                 , LAST_CHANGE_DATE = #{lastChangeDate}
+                 , LAST_CHANGE_TIME = #{lastChangeTime}
+             WHERE USER_ID = #{userID}
+        ]]>
+    </update>
+
+    <update id="updateUserPassword" parameterType="map">
+        UPDATE USERS
+        SET password = #{password},
+        last_change_date = #{lastChangeDate},
+        last_change_time = #{lastChangeTime}
+        WHERE user_id = #{userID}
+    </update>
+
+    <update id="changeUserPassword"
+            parameterType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        UPDATE USERS
+           SET
+               PASSWORD                = #{password}
+             , REQUIRES_PASSWORD_RESET = 'N'
+             , LAST_CHANGE_USER        = #{lastChangeUser}
+             , LAST_CHANGE_DATE        = #{lastChangeDate}
+             , LAST_CHANGE_TIME        = #{lastChangeTime}
+         WHERE USER_ID = #{userID}
+        ]]>
+    </update>
+</mapper>

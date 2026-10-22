@@ -6,6 +6,11 @@ name: Deploy website
 on:
   push:
     branches: [main]
+    paths-ignore:              # the admin system is not part of the website
+      - 'admin-portal/**'
+      - 'server/**'
+      - 'system/**'
+      - '.devcontainer/**'
   workflow_dispatch:
 
 permissions:

@@ -1,0 +1,74 @@
+package com.kh.niswebportal.app.nis13.inquiry
+
+import com.kh.niswebportal.app.datasource.HeaderItem
+import com.kh.niswebportal.core.strategy.DynamicReportResponse
+import com.kh.niswebportal.core.strategy.NisInquiryStrategy
+import org.springframework.stereotype.Service
+import javax.sql.DataSource
+
+@Service
+class Nis13a2InquiryService(
+    private val dataSource: DataSource
+): NisInquiryStrategy {
+
+    override val sourceId: String = "nis_13a2"
+
+    override fun getDynamicReport(uploadId: String?): DynamicReportResponse {
+        dataSource.connection.use { conn ->
+            val hasUploadId = !uploadId.isNullOrBlank()
+val dataSql = """
+                SELECT item_code, description, unit, period_type, total_value, quarter_1, quarter_2, quarter_3, quarter_4, remarks
+                FROM nis_13a2_electricity_production
+                ${if (hasUploadId) "WHERE upload_id = ?" else "WHERE (upload_id IS NULL OR upload_id IN (SELECT upload_id FROM datasource_history WHERE status = '01'))"}
+                ORDER BY id ASC
+            """.trimIndent()
+
+            val rows = mutableListOf<List<Any?>>()
+
+            conn.prepareStatement(dataSql).use { stmt ->
+                if (hasUploadId) stmt.setString(1, uploadId)
+                stmt.executeQuery().use { rs ->
+                    var idx = 1
+                    while (rs.next()) {
+                        rows.add(
+                            listOf(
+                                idx++,
+                                rs.getString("item_code") ?: "",
+                                rs.getString("description") ?: "",
+                                rs.getString("unit") ?: "-",
+                                rs.getString("period_type") ?: "-",
+                                rs.getString("total_value") ?: "-",
+                                rs.getString("quarter_1") ?: "-",
+                                rs.getString("quarter_2") ?: "-",
+                                rs.getString("quarter_3") ?: "-",
+                                rs.getString("quarter_4") ?: "-",
+                                rs.getString("remarks") ?: "-"
+                            )
+                        )
+                    }
+                }
+            }
+
+            val headers = listOf(
+                HeaderItem("ល.រ"),
+                HeaderItem("កូដ (Code)"),
+                HeaderItem("បរិយាយទិន្នន័យ (Description)"),
+                HeaderItem("ឯកតា (Unit)"),
+                HeaderItem("រយៈពេល (Period)"),
+                HeaderItem("សរុប (Total)"),
+                HeaderItem("ត្រីមាសទី១ (Quarter 1)"),
+                HeaderItem("ត្រីមាសទី២ (Quarter 2)"),
+                HeaderItem("ត្រីមាសទី៣ (Quarter 3)"),
+                HeaderItem("ត្រីមាសទី៤ (Quarter 4)"),
+                HeaderItem("ផ្សេងៗ (Remarks)")
+            )
+
+            return DynamicReportResponse(
+                title = "ស្ថិតិការផលិតនិងការនាំចូលអគ្គិសនីសរុបប្រចាំឆ្នាំ (Total Electricity Production and Import Statistics)",
+                sub_title = "NIS 13A_2 - ស្ថិតិរដ្ឋបាលក្រសួងរ៉ែនិងថាមពល (វិស័យថាមពល)",
+                tb_headers = listOf(headers),
+                tb_rows = rows
+            )
+        }
+    }
+}

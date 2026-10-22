@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kh.niswebportal.app.settings.role.RoleEbc">
+
+
+    <select id="retrieveListRole"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        SELECT
+               ROLE_ID    AS "roleId"
+             , NAME       AS "name"
+             , REMARK     AS "description"
+             , ''         AS "permission"
+        FROM ROLES
+        WHERE STATUS = '01'
+          AND (
+                NULLIF(#{search}, '') IS NULL
+             OR ROLE_ID ILIKE '%' || #{search} || '%'
+             OR NAME    ILIKE '%' || #{search} || '%'
+          )
+        ORDER BY CREATED_AT DESC, ROLE_ID ASC
+        LIMIT #{limit} OFFSET #{offset}
+    ]]>
+    </select>
+
+    <select id="countListRole"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        SELECT COUNT(*) AS "total"
+          FROM ROLES
+         WHERE STATUS IN ( '01' , '02' )
+           AND (
+                NULLIF(#{search}, '') IS NULL
+             OR ROLE_ID ILIKE '%' || #{search} || '%'
+             OR NAME    ILIKE '%' || #{search} || '%'
+          )
+    ]]>
+    </select>
+
+    <select id="retrieveRoleById"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+    SELECT
+          r.ROLE_ID            AS "roleId"
+        , r.NAME               AS "roleName"
+        , p.permission_id      AS "permissionId"
+        , p.remark             AS "description"
+    FROM
+        role_permissions rp
+    LEFT JOIN ROLES r
+        ON r.role_id = rp.role_id
+    LEFT JOIN permissions p
+        ON p.permission_id = rp.permission_id
+    WHERE r.role_id = #{roleId}
+    ]]>
+    </select>
+
+    <insert id="registerRole"
+            parameterType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+    INSERT INTO ROLES (
+        ROLE_ID,
+        CREATED_AT,
+        STATUS,
+        NAME,
+        REMARK,
+        FIRST_REGISTER_BRANCH,
+        FIRST_REGISTER_USER,
+        FIRST_REGISTER_DATE,
+        FIRST_REGISTER_TIME,
+        LAST_CHANGE_BRANCH,
+        LAST_CHANGE_USER,
+        LAST_CHANGE_DATE,
+        LAST_CHANGE_TIME
+    ) VALUES (
+        #{roleId},
+        COALESCE(#{createdAt}, now()),
+        COALESCE(#{status}, '01'),
+        #{name},
+        #{description},
+        #{firstRegisterBranch},
+        #{firstRegisterUser},
+        #{firstRegisterDate},
+        #{firstRegisterTime},
+        #{lastChangeBranch},
+        #{lastChangeUser},
+        #{lastChangeDate},
+        #{lastChangeTime}
+    )
+    ]]>
+    </insert>
+
+    <update id="updateRole" parameterType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+    UPDATE ROLES
+       SET
+           NAME               = COALESCE(#{name}, NAME)
+         , REMARK             = COALESCE(#{description}, REMARK)
+         , STATUS             = COALESCE(#{status}, STATUS)
+         , LAST_CHANGE_BRANCH = #{lastChangeBranch}
+         , LAST_CHANGE_USER   = #{lastChangeUser}
+         , LAST_CHANGE_DATE   = #{lastChangeDate}
+         , LAST_CHANGE_TIME   = #{lastChangeTime}
+     WHERE ROLE_ID = #{roleId}
+    ]]>
+    </update>
+
+    <update id="deleteRole"
+            parameterType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        UPDATE ROLES
+           SET
+               STATUS             = '09'
+             , LAST_CHANGE_BRANCH = #{lastChangeBranch}
+             , LAST_CHANGE_USER   = #{lastChangeUser}
+             , LAST_CHANGE_DATE   = #{lastChangeDate}
+             , LAST_CHANGE_TIME   = #{lastChangeTime}
+         WHERE ROLE_ID = #{roleId}
+        ]]>
+    </update>
+
+    <select id="retrieveListRoleDropdown"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        SELECT
+               ROLE_ID    AS "roleId"
+             , NAME       AS "name"
+             , REMARK     AS "description"
+             , STATUS     AS "status"
+        FROM ROLES
+        WHERE STATUS IN ( '01' , '02' )
+          AND (
+                NULLIF(#{search}, '') IS NULL
+             OR ROLE_ID ILIKE '%' || #{search} || '%'
+             OR NAME    ILIKE '%' || #{search} || '%'
+          )
+        ORDER BY CREATED_AT DESC, ROLE_ID ASC
+    ]]>
+    </select>
+
+</mapper>

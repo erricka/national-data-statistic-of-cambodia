@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kh.niswebportal.app.category.CategoryEbc">
+
+    <insert id="registerCategory"
+            parameterType="com.kh.niswebportal.core.com.MData">
+    <![CDATA[
+        INSERT INTO CATEGORY (
+            CATEGORY_NAME,
+            DESCRIPTION,
+            STATUS,
+            FIRST_REGISTER_DATE,
+            FIRST_REGISTER_TIME,
+            LAST_CHANGE_DATE,
+            LAST_CHANGE_TIME
+            )
+        VALUES (
+            COALESCE(#{categoryName}, ''),
+            COALESCE(#{description}, ''),
+            COALESCE(#{status}, '01'),
+            #{firstRegisterDate},
+            #{firstRegisterTime},
+            #{lastChangeDate},
+            #{lastChangeTime}
+        )
+    ]]>
+    </insert>
+
+    <select id="retrieveListCategory"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        SELECT
+            CATEGORY_ID             AS "categoryId"
+            , CATEGORY_NAME			AS "categoryName"
+            , DESCRIPTION			AS "description"
+            , STATUS 				AS "status"
+            , LAST_CHANGE_DATE		AS "lastUpdate"
+        FROM
+            CATEGORY
+        WHERE
+            STATUS = '01'
+            AND (
+                  NULLIF(#{search}, '') IS NULL
+                  OR CATEGORY_NAME ILIKE '%' || #{search} || '%'
+            )
+            ORDER BY FIRST_REGISTER_DATE DESC, CATEGORY_ID ASC
+            LIMIT #{limit} OFFSET #{offset}
+    ]]>
+    </select>
+
+    <select id="countListCategory"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        SELECT COUNT(*) AS "total"
+        FROM
+            CATEGORY
+        WHERE
+            STATUS = '01'
+            AND (
+                  NULLIF(#{search}, '') IS NULL
+                  OR CATEGORY_NAME ILIKE '%' || #{search} || '%'
+            )
+    ]]>
+    </select>
+
+    <update id="updateCategory"
+            parameterType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        UPDATE CATEGORY
+           SET
+             CATEGORY_NAME        = COALESCE(#{categoryName}, CATEGORY_NAME)
+             , DESCRIPTION        = COALESCE(#{description}, DESCRIPTION)
+             , STATUS             = COALESCE(#{status}, STATUS)
+             , LAST_CHANGE_DATE   = #{lastChangeDate}
+             , LAST_CHANGE_TIME   = #{lastChangeTime}
+         WHERE CATEGORY_ID = #{categoryId}
+        ]]>
+    </update>
+
+    <select id="retrieveListCategoryHome"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        SELECT
+            CATEGORY_ID             AS "categoryId"
+            , CATEGORY_NAME			AS "categoryName"
+            , DESCRIPTION			AS "description"
+        FROM
+            CATEGORY
+        WHERE
+            STATUS = '01'
+            ORDER BY FIRST_REGISTER_DATE DESC, CATEGORY_ID ASC
+            LIMIT 6
+    ]]>
+    </select>
+
+    <select id="retrieveListCategoryPage"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        SELECT
+            CAT.CATEGORY_ID             AS "categoryId"
+            , CAT.CATEGORY_NAME			AS "categoryName"
+            , CAT.DESCRIPTION			AS "description"
+            , COUNT(DS.source_id ) 		AS "totalDataset"
+            , CAT.LAST_CHANGE_DATE      AS "lastChangeDate"
+        FROM
+            CATEGORY CAT
+        LEFT JOIN DATASOURCE DS
+        	ON CAT.CATEGORY_ID = DS.CATEGORY_ID
+        WHERE
+            CAT.STATUS = '01'
+            AND (
+                  NULLIF(#{search}, '') IS NULL
+                  OR CAT.CATEGORY_NAME ILIKE '%' || #{search} || '%'
+                  OR CAT.CATEGORY_ID::text ILIKE '%' || #{search} || '%'
+            )
+            GROUP BY
+			    CAT.CATEGORY_ID,CAT.CATEGORY_ID,CAT.CATEGORY_NAME,CAT.DESCRIPTION,CAT.LAST_CHANGE_DATE,CAT.FIRST_REGISTER_DATE
+			ORDER BY
+			    CAT.FIRST_REGISTER_DATE DESC,
+			    CAT.CATEGORY_ID ASC
+            LIMIT #{limit} OFFSET #{offset}
+    ]]>
+    </select>
+
+    <select id="countListCategoryPage"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        SELECT
+            COUNT(*) AS "total"
+        FROM
+            CATEGORY CAT
+        LEFT JOIN DATASOURCE DS
+        	ON CAT.CATEGORY_ID = DS.CATEGORY_ID
+        WHERE
+            CAT.STATUS = '01'
+            AND (
+                  NULLIF(#{search}, '') IS NULL
+                  OR CAT.CATEGORY_NAME ILIKE '%' || #{search} || '%'
+                  OR CAT.CATEGORY_ID::text ILIKE '%' || #{search} || '%'
+            )
+    ]]>
+    </select>
+
+    <select id="retrieveCategorySummary"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        SELECT
+            (SELECT COUNT(*) FROM CATEGORY WHERE STATUS = '01') AS "totalCategory",
+            (SELECT COUNT(*) FROM DATASOURCE) AS "totalDatasource";
+    ]]>
+    </select>
+
+    <select id="retrieveCategoryDropdown"
+            parameterType="com.kh.niswebportal.core.com.MData"
+            resultType="com.kh.niswebportal.core.com.MData">
+        <![CDATA[
+        SELECT
+            CATEGORY_ID             AS "categoryId"
+            , CATEGORY_NAME			AS "categoryName"
+            , DESCRIPTION			AS "description"
+        FROM
+            CATEGORY
+        WHERE
+            STATUS = '01'
+            AND (
+                  NULLIF(#{search}, '') IS NULL
+                  OR CATEGORY_NAME ILIKE '%' || #{search} || '%'
+            )
+            ORDER BY FIRST_REGISTER_DATE DESC, CATEGORY_ID ASC
+    ]]>
+    </select>
+</mapper>

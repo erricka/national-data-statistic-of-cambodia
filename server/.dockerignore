@@ -1,0 +1,5 @@
+build
+.gradle
+logs
+uploads
+.git
