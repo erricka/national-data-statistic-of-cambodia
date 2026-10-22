@@ -102,6 +102,14 @@ createdb nis && psql -d nis -f nis.sql
 
 The build is static files; any web server works as long as unknown paths serve `index.html` (a `404.html` copy is produced for hosts such as GitHub Pages).
 
+**GitHub Pages**
+
+```bash
+npm run deploy:pages
+```
+
+This builds the site for `https://<owner>.github.io/<repo>/` and force-pushes it to the `gh-pages` branch. The first time, enable it under **Settings → Pages → Build and deployment → Source: Deploy from a branch → `gh-pages` / `(root)`**. Pages on a private repository needs a paid GitHub plan, and the published site is public either way. Set `BASE_PATH=/` when serving from a custom domain.
+
 **Docker + Nginx**
 
 ```bash
