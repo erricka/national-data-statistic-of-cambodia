@@ -67,9 +67,13 @@ The server must use HTTPS, and its `cors.allowed-origins` setting must include t
 
 New data is entered through the **existing NIS admin portal**, not through this website. No code changes are needed for this.
 
-1. **Upload**: sign in to the admin portal → **Data Management → Dataset** → open the dataset → **Add data** → choose the Excel file filled in with that dataset's template. The server reads the file into the dataset's table and marks it **Pending**.
+1. **Upload**: sign in to the admin portal → **Dataset → New Dataset** → enter a title, choose the category (ministry) and the template (table), choose the Excel file filled in with that table's template, and **Submit**. The server reads the file into the table and marks it **Pending**.
 2. **Approve**: a reviewer opens **Approval Management**, checks the upload and clicks **Approve**. Only approved uploads are public.
 3. **Publish**: run `npm run refresh` (or let the scheduled refresh below do it). The new figures appear on the website within a few minutes, including the home-page figures and the province map if the upload belongs to their tables.
+
+> **Each approved upload replaces the previous data of that table** — the server marks the earlier upload as cancelled. Always upload the **complete table** (all years) using the table's template, not just the new rows.
+
+**Practice system.** A complete copy of the NIS system (database, server and admin portal) that runs on one computer with Docker Desktop, with a `publish.bat` that updates this website, is available from the project owner. It is not in this repository because it contains the full database, including staff accounts.
 
 To publish approvals automatically, schedule `npm run refresh` every night (cron on Linux, Task Scheduler on Windows) on a computer that has this project, the `.env` file, Node.js, and permission to push to GitHub.
 
