@@ -2,9 +2,13 @@
 /**
  * Builds the static data snapshot the portal reads from `public/data/`.
  *
- *   DATABASE_URL=postgres://user:pass@host:5432/nis \
- *   NIS_API_URL=http://host:8010/api/nis-portal \
- *   npm run export:data
+ * Put the database address in a `.env` file (copy `.env.example`; `.env` is never
+ * committed), then run `npm run export:data`:
+ *
+ *   DATABASE_URL=postgres://user:pass@host:5432/nis
+ *   NIS_API_URL=https://host/api/nis-portal      (optional)
+ *
+ * Variables set in the shell take precedence over `.env`.
  *
  * Options:
  *   --tables=api|db|skip  where statistical tables come from (default: api when NIS_API_URL is set, else db)
@@ -26,6 +30,11 @@ import { PROVINCES, matchProvince } from './lib/provinces.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..');
+try {
+  process.loadEnvFile(path.join(root, '.env'));
+} catch {
+  // no .env file: use the shell environment only
+}
 const args = Object.fromEntries(
   process.argv.slice(2).map((a) => {
     const [k, v] = a.replace(/^--/, '').split('=');
@@ -37,7 +46,7 @@ const TABLE_SOURCE = args.tables || (API ? 'api' : 'db');
 const OUT = path.resolve(root, args.out || 'public/data');
 
 if (!process.env.DATABASE_URL) {
-  console.error('DATABASE_URL is required, e.g. postgres://user:pass@localhost:5432/nis');
+  console.error('DATABASE_URL is required. Set it in .env (see .env.example), e.g. postgres://user:pass@localhost:5432/nis');
   process.exit(1);
 }
 

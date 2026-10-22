@@ -25,17 +25,24 @@ PostgreSQL database  ──►  npm run export:data  ──►  public/data/*.js
 - Only published data is exported: active tables, and only uploads approved for release (status `01`), the same rule the NIS server uses. No users, passwords or logs are read.
 - The database itself is never changed. The export only reads from it.
 
-### Refreshing the data
+### Connecting to our database and refreshing the data
 
-Run this on a computer that can reach the database (for example, on the NIS network):
+The database address goes in a file called **`.env`** in the project folder. It stays on your computer and is never uploaded to GitHub.
 
-```bash
-DATABASE_URL=postgres://USER:PASSWORD@DB_HOST:5432/DB_NAME \
-NIS_API_URL=https://YOUR-NIS-SERVER/api/nis-portal \
-npm run export:data
-```
+1. Copy `.env.example` to `.env`.
+2. Set the database line to our PostgreSQL database:
+   ```
+   DATABASE_URL=postgres://USER:PASSWORD@DB_HOST:5432/DB_NAME
+   NIS_API_URL=https://YOUR-NIS-SERVER/api/nis-portal     # optional
+   ```
+3. Export the data and publish:
+   ```bash
+   npm run export:data        # reads .env, rewrites public/data/
+   npm run deploy:pages       # updates the website
+   git add public/data && git commit -m "Refresh data" && git push
+   ```
 
-`NIS_API_URL` is optional. With it, each table keeps the official layout produced by the NIS server; without it, tables are exported as plain rows.
+`NIS_API_URL` is optional. With it, each table keeps the official layout produced by the NIS server; without it, tables are exported as plain rows. The export is done by `scripts/export-data.mjs`.
 
 Use a read-only database account:
 
@@ -48,7 +55,7 @@ GRANT SELECT ON ALL TABLES IN SCHEMA public TO portal_reader;
 
 ### Loading tables live from the NIS server (optional)
 
-Create a `.env` file with:
+In the same `.env` file, set:
 
 ```
 VITE_DATA_MODE=api

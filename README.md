@@ -65,10 +65,16 @@ Catalog, indicators and province data always come from the snapshot files, which
 
 `scripts/export-data.mjs` rebuilds `public/data/` from the NIS PostgreSQL database and, optionally, the NIS server's official table layouts:
 
+Put the database address in `.env` (copy `.env.example`; `.env` is git-ignored), then run:
+
 ```bash
-DATABASE_URL=postgres://user:pass@db-host:5432/nis \
-NIS_API_URL=https://your-nis-server/api/nis-portal \
 npm run export:data
+```
+
+```
+# .env
+DATABASE_URL=postgres://user:pass@db-host:5432/nis
+NIS_API_URL=https://your-nis-server/api/nis-portal   # optional
 ```
 
 | Option | |
