@@ -8,14 +8,16 @@
  *   npm run refresh
  *
  * Safe to schedule (cron, Windows Task Scheduler) on a computer that can reach the
- * database and push to GitHub. Extra arguments are passed to the export, e.g.
- * `npm run refresh -- --tables=db`.
+ * database and push to GitHub: when no approved data changed, nothing is committed
+ * or published. `--force` republishes anyway; other arguments go to the export,
+ * e.g. `npm run refresh -- --tables=db`.
  */
 import { execSync } from 'node:child_process'
 
 const run = (cmd) => execSync(cmd, { stdio: 'inherit' })
 const read = (cmd) => execSync(cmd, { encoding: 'utf8' }).trim()
-const exportArgs = process.argv.slice(2).join(' ')
+const force = process.argv.includes('--force')
+const exportArgs = process.argv.slice(2).filter((a) => a !== '--force').join(' ')
 
 run(`npm run export:data${exportArgs ? ` -- ${exportArgs}` : ''}`)
 
@@ -26,6 +28,9 @@ if (changed) {
   run(`git commit -q -m "Refresh data ${day}" -- public/data`)
   run('git push -q')
   console.log(`Saved ${changed.split('\n').length} updated data files to GitHub.`)
+} else if (!force) {
+  console.log('\nNo new approved data since the last refresh; the website is already up to date.')
+  process.exit(0)
 }
 
 run('npm run deploy:pages')

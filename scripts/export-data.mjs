@@ -363,9 +363,25 @@ const catalog = {
   releases,
 };
 
+// Keep the previous timestamp when nothing else changed, so re-running the export
+// on unchanged data leaves the files byte-for-byte identical.
+async function stableTimestamp(file, body) {
+  try {
+    const prev = JSON.parse(await fs.readFile(path.join(OUT, file), 'utf8'));
+    const strip = (o) => JSON.stringify({ ...o, generatedAt: null });
+    if (strip(prev) === strip(body)) return prev.generatedAt;
+  } catch {
+    // no previous file
+  }
+  return body.generatedAt;
+}
+
 await fs.mkdir(OUT, { recursive: true });
+catalog.generatedAt = await stableTimestamp('catalog.json', catalog);
+const indicatorsBody = { generatedAt: catalog.generatedAt, indicators };
+indicatorsBody.generatedAt = await stableTimestamp('indicators.json', indicatorsBody);
 await fs.writeFile(path.join(OUT, 'catalog.json'), JSON.stringify(catalog));
-await fs.writeFile(path.join(OUT, 'indicators.json'), JSON.stringify({ generatedAt: catalog.generatedAt, indicators }));
+await fs.writeFile(path.join(OUT, 'indicators.json'), JSON.stringify(indicatorsBody));
 await fs.writeFile(path.join(OUT, 'provinces.json'), JSON.stringify({ provinces: PROVINCES.map(({ no, id, en, km }) => ({ no, id, name: { en, km } })), indicators: provinceIndicators }));
 await db.end();
 log(`done → ${path.relative(root, OUT)}`);
