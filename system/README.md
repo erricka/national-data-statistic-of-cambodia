@@ -17,9 +17,9 @@ Staff (browser) ──► admin portal link ──► NIS server ──► datab
 ## For staff: adding new data (no setup)
 
 1. Open the **admin portal link** you were given (bookmark it). If GitHub shows a notice first, click **Continue**.
-2. Sign in with **your usual NIS account** (for example your ministry's upload account).
+2. Sign in with **your usual NIS account**: your ministry's upload account (for example `32_user`).
 3. **Dataset → New Dataset**: enter a title, choose the category (ministry) and the template (table), choose the Excel file filled in with that table's template, and click **Submit**. The upload is now **Pending**.
-4. The **approver** (for example your ministry's approval account) signs in, opens **Approval Management**, checks the preview and clicks **Approve**.
+4. The **approver** signs in with the ministry's **approval account** (for example `32_Approval`), opens **Approval Management**, checks the preview and clicks **Approve**. Upload accounts cannot approve; approval accounts can upload and approve. One person can do both by signing out and in again with the other account.
 5. That's all. The public website shows the new data **2–3 minutes** later.
 
 > **An approved upload replaces all earlier data of that table.** Always upload the **complete table** (all years), not only the new rows.
@@ -36,7 +36,7 @@ If the link does not open, the system is switched off. Ask the owner to open it 
 2. Click **[Open the NIS admin system](https://codespaces.new/erricka/national-data-statistic-of-cambodia?quickstart=1)** (or on the repository page: **Code → Codespaces → Create codespace on main**). A code editor opens in your browser.
 3. In the **Explorer** on the left, open `system/database/private` and drag the database file into it.
 4. In the **Terminal** at the bottom, type `bash system/start.sh` and press Enter. The first time takes 5–10 minutes. At the end it shows the **admin portal link** and your own login (`nis-admin`).
-5. Send the link to staff. Staff use their usual NIS accounts (the passwords from the NIS system at the time of the backup).
+5. Type `bash system/accounts.sh` to see every ministry's upload and approval account. Send the link to staff; they use their usual NIS accounts (the passwords from the NIS system at the time of the backup).
 6. On github.com, open **Settings → Codespaces** (your account settings) and set **Default idle timeout** to **240 minutes** and **Default retention period** to **30 days**.
 
 ### Every work day
@@ -49,11 +49,19 @@ The link only works while the Codespace is running. GitHub stops it after the id
 
 In the Codespace, open the **Ports** tab (next to Terminal), right-click port **8080** → **Port Visibility** → **Public**. (The system does this by itself when it starts; some organisations do not allow it.)
 
+### Staff accounts
+
+Every ministry has an **upload account** (`<number>_user`, can upload) and an **approval account** (`<number>_Approval`, can upload and approve). `bash system/accounts.sh` lists them all.
+
+- **Forgot password**: sign in as `nis-admin` → **User Management** → open the user → **Reset password**. Their password becomes the temporary password shown by `bash system/accounts.sh`. Send it privately; after signing in they change it with the key icon (top right) → **Change Password**.
+- **New staff member**: **User Management** → add the user with the role **UPLOAD** (upload only) or **APPROVAL** (upload and approve).
+
 ### Commands (optional, in the Terminal)
 
 | Command | What it does |
 |---|---|
 | `bash system/start.sh` | Starts the system (if it did not start by itself) and shows the link and login. |
+| `bash system/accounts.sh` | Lists staff accounts and the temporary password for password resets. |
 | `bash system/publish.sh` | Publishes approved data now, instead of waiting for the automatic publishing. |
 | `bash system/backup.sh` | Saves the whole database to `system/database/private/nis-backup-<date>.sql.gz`. |
 | `bash system/stop.sh` | Stops the system; data is kept. |
@@ -80,5 +88,5 @@ What the automatic publishing did is in `system/auto-publish.log`.
 
 - `docker-compose.yml` runs PostgreSQL 18, the NIS server (`server/`) and the admin portal (`admin-portal/`, port 8080, which forwards `/api/` to the server).
 - `database/init/` loads the database file and creates the `nis-admin` login on the first start.
-- `auto-publish.sh` checks every minute whether the set of approved uploads changed and then runs `publish.sh`: it exports the approved data to `public/data/`, checks nothing published elsewhere would be lost (`lib/check-releases.mjs`) and pushes to GitHub. The **Deploy website** GitHub Action then rebuilds the website.
+- `auto-publish.sh` checks every 30 seconds whether the approved uploads changed (and stayed unchanged for one more check, since the server finishes an approval in steps), then runs `publish.sh`: it exports the approved data to `public/data/`, checks nothing published elsewhere would be lost (`lib/check-releases.mjs`) and pushes to GitHub. The **Deploy website** GitHub Action then rebuilds the website.
 - `.devcontainer/devcontainer.json` sets up the Codespace and starts the system whenever the Codespace starts.

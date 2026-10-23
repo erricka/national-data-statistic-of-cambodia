@@ -1,17 +1,20 @@
 #!/bin/bash
 # Publishes newly approved data to the website automatically: checks the database
-# every minute and runs publish.sh when the set of approved uploads changes.
+# every 30 seconds and runs publish.sh once the approved uploads have changed and then
+# stayed the same for one more check (the server finishes an approval in steps).
 # Started in the background by start.sh, stopped by stop.sh. Log: system/auto-publish.log
 cd "$(dirname "$0")"
-last=""
+published=""
+seen=""
 failed_at=0
 while true; do
   sig=$(docker compose exec -T db psql -U postgres -d nis -tAc \
-    "SELECT md5(coalesce(string_agg(upload_id, ',' ORDER BY upload_id), '')) FROM datasource_history WHERE status = '01'" \
-    2>/dev/null || true)
+    "SELECT md5(coalesce(string_agg(concat_ws('|', upload_id, archived_at, last_change_date, last_change_time),
+                                    ',' ORDER BY upload_id), ''))
+     FROM datasource_history WHERE status = '01'" 2>/dev/null || true)
   now=$(date +%s)
-  # Publish when approvals changed; retry a failed publish after 10 minutes.
-  if [ -n "$sig" ] && { [ "$sig" != "$last" ] || { [ "$failed_at" -gt 0 ] && [ $((now - failed_at)) -ge 600 ]; }; }; then
+  if [ -n "$sig" ] && [ "$sig" = "$seen" ] && \
+     { [ "$sig" != "$published" ] || { [ "$failed_at" -gt 0 ] && [ $((now - failed_at)) -ge 600 ]; }; }; then
     echo "[$(date -u '+%F %T') UTC] Approved uploads changed; publishing..."
     if bash ./publish.sh; then
       failed_at=0
@@ -19,7 +22,8 @@ while true; do
       failed_at=$now
       echo "[$(date -u '+%F %T') UTC] Publishing failed (see above); trying again in 10 minutes."
     fi
-    last=$sig
+    published=$sig
   fi
-  sleep 60
+  seen=$sig
+  sleep 30
 done

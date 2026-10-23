@@ -97,6 +97,7 @@ else
   echo "  Fix the cause, then start again from the database file with:  bash system/reset.sh"
 fi
 echo
+echo "  Staff accounts, who can approve, and password resets:  bash system/accounts.sh"
 echo "  Approved data goes to the public website automatically within a few minutes."
 echo "  (Progress: system/auto-publish.log. To publish right away: bash system/publish.sh)"
 echo
