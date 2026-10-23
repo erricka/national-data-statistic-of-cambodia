@@ -215,6 +215,19 @@ async function tableFromDb(ds) {
   };
 }
 
+async function sameTable(file, table) {
+  try {
+    const old = JSON.parse(await fs.readFile(file, 'utf8'));
+    // Ignore a leading row counter (1, 2, 3, ...), which follows the row order.
+    const counted = (rows) => rows.every((r, i) => Number(r[0]) === i + 1);
+    const rowsKey = (rows) => {
+      const skip = counted(rows) ? 1 : 0;
+      return rows.map((r) => JSON.stringify(r.slice(skip))).sort().join('\n');
+    };
+    return JSON.stringify(old.header) === JSON.stringify(table.header) && rowsKey(old.rows) === rowsKey(table.rows);
+  } catch { return false; }
+}
+
 if (TABLE_SOURCE !== 'skip') {
   log(`tables: exporting ${datasets.length} from ${TABLE_SOURCE === 'api' ? API : 'database'}`);
   let ok = 0, fallback = 0, failed = 0;
@@ -230,7 +243,12 @@ if (TABLE_SOURCE !== 'skip') {
       }
       const width = Math.max(table.header.at(-1)?.length || 0, ...table.rows.slice(0, 50).map((r) => r.length));
       ds.table = { rows: table.rows.length, columns: width, source: table.source };
-      await fs.writeFile(path.join(tablesDir, `${ds.id}.json`), JSON.stringify({ id: ds.id, header: table.header, rows: table.rows }));
+      const file = path.join(tablesDir, `${ds.id}.json`);
+      // The server does not fix the order of rows that tie in its sort, so keep the
+      // existing file when only the row order differs (no change on the website).
+      if (!(await sameTable(file, table))) {
+        await fs.writeFile(file, JSON.stringify({ id: ds.id, header: table.header, rows: table.rows }));
+      }
       ok++;
     }
   };

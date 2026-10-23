@@ -1,88 +1,84 @@
 # NIS admin system
 
-The whole NIS data system (database, NIS server and admin portal) running in your browser with GitHub Codespaces. Use it to add data with Excel, approve it and publish it to the public website: https://erricka.github.io/national-data-statistic-of-cambodia/
+Works like the team's NIS data portal: **one admin portal link** for everyone. Staff sign in with their usual NIS account, upload an Excel file, an approver approves it, and **the public website updates by itself** a few minutes later:
+https://erricka.github.io/national-data-statistic-of-cambodia/
 
-The code is in this repository (`server/`, `admin-portal/`). **The database is not.** It contains staff accounts, so you add it yourself, and it stays inside your Codespace.
+The system (database, NIS server and admin portal) runs in one GitHub Codespace, a computer in the cloud that GitHub runs for the owner. The code is in this repository (`server/`, `admin-portal/`). **The database is not.** It contains staff accounts, so the owner adds it once and it stays inside the Codespace.
 
-## What you need
+```
+Staff (browser) ──► admin portal link ──► NIS server ──► database
+                                                            │ every approval
+                                                            ▼
+                                  public website updates by itself (2–3 minutes)
+```
 
-- A GitHub account that the repository owner has added under **Settings → Collaborators** (needed to publish).
-- The database file, `01-nis-data.sql.gz`, from the practice-system zip, or a newer backup from a colleague (see [Handing over](#handing-over-to-a-colleague)). Get it privately from the project owner.
+---
 
-## 1. Open the system (first time: about 10 minutes)
+## For staff: adding new data (no setup)
 
-1. On the repository page on GitHub, click **Code → Codespaces → Create codespace on main**. A code editor opens in your browser.
-2. In the **Explorer** on the left, open `system/database/private` and drag the database file into it.
-3. In the **Terminal** at the bottom, run:
-   ```bash
-   bash system/start.sh
-   ```
-   The first time, this builds the server and admin portal (5–10 minutes). At the end it prints the **admin portal link**, a **username** and a **password**.
-4. Open the link and sign in.
-
-Next time, open the same Codespace from **Code → Codespaces** (don't create a new one) and run `bash system/start.sh` again. It starts in about a minute with all your changes.
-
-## 2. Add data with Excel
-
-1. **Dataset → New Dataset**: enter a title, choose the category (ministry) and the template (table), choose the Excel file filled in with that table's template, and **Submit**. The upload is now **Pending**.
-2. **Approval Management**: open the upload, check the preview, and click **Approve**.
+1. Open the **admin portal link** you were given (bookmark it). If GitHub shows a notice first, click **Continue**.
+2. Sign in with **your usual NIS account** (for example your ministry's upload account).
+3. **Dataset → New Dataset**: enter a title, choose the category (ministry) and the template (table), choose the Excel file filled in with that table's template, and click **Submit**. The upload is now **Pending**.
+4. The **approver** (for example your ministry's approval account) signs in, opens **Approval Management**, checks the preview and clicks **Approve**.
+5. That's all. The public website shows the new data **2–3 minutes** later.
 
 > **An approved upload replaces all earlier data of that table.** Always upload the **complete table** (all years), not only the new rows.
 
-## 3. Publish to the website
+If the link does not open, the system is switched off. Ask the owner to open it (below).
 
-```bash
-bash system/publish.sh
-```
+---
 
-This exports the approved data, saves it to GitHub, and the website shows it 1–2 minutes later. If nothing new was approved, it says the website is already up to date. **Anything you publish is public.**
+## For the owner: keeping the system running
 
-Before publishing, it checks that this copy has every upload already on the website. If someone published from a different copy, it stops instead of removing their data. Then get their backup (below) or let them publish.
+### First time (about 15 minutes)
 
-## Commands
+1. Ask for the database file `01-nis-data.sql.gz` (from the practice-system zip) privately.
+2. Click **[Open the NIS admin system](https://codespaces.new/erricka/national-data-statistic-of-cambodia?quickstart=1)** (or on the repository page: **Code → Codespaces → Create codespace on main**). A code editor opens in your browser.
+3. In the **Explorer** on the left, open `system/database/private` and drag the database file into it.
+4. In the **Terminal** at the bottom, type `bash system/start.sh` and press Enter. The first time takes 5–10 minutes. At the end it shows the **admin portal link** and your own login (`nis-admin`).
+5. Send the link to staff. Staff use their usual NIS accounts (the passwords from the NIS system at the time of the backup).
+6. On github.com, open **Settings → Codespaces** (your account settings) and set **Default idle timeout** to **240 minutes** and **Default retention period** to **30 days**.
+
+### Every work day
+
+Click **[Open the NIS admin system](https://codespaces.new/erricka/national-data-statistic-of-cambodia?quickstart=1)** again (it reopens your existing Codespace). The system starts by itself within a few minutes and the link works again; nothing to type. Keep the browser tab open while staff work.
+
+The link only works while the Codespace is running. GitHub stops it after the idle timeout (up to 4 hours without you using the tab), and then the link stops working until you open it again.
+
+### If staff cannot open the link
+
+In the Codespace, open the **Ports** tab (next to Terminal), right-click port **8080** → **Port Visibility** → **Public**. (The system does this by itself when it starts; some organisations do not allow it.)
+
+### Commands (optional, in the Terminal)
 
 | Command | What it does |
 |---|---|
-| `bash system/start.sh` | Starts the system and prints the link and login. |
-| `bash system/publish.sh` | Puts approved data on the public website. |
+| `bash system/start.sh` | Starts the system (if it did not start by itself) and shows the link and login. |
+| `bash system/publish.sh` | Publishes approved data now, instead of waiting for the automatic publishing. |
 | `bash system/backup.sh` | Saves the whole database to `system/database/private/nis-backup-<date>.sql.gz`. |
-| `bash system/stop.sh` | Stops the system; your data is kept. |
-| `bash system/reset.sh` | Deletes everything in this copy and reloads the newest file in `system/database/private`. |
+| `bash system/stop.sh` | Stops the system; data is kept. |
+| `bash system/reset.sh` | Deletes all changes and reloads the newest file in `system/database/private`. |
 
-## Keep your work safe
+What the automatic publishing did is in `system/auto-publish.log`.
 
-- Your data lives only in your Codespace. **GitHub deletes Codespaces that are not used for about 30 days.** Run `bash system/backup.sh` after important work, then right-click the backup in the Explorer → **Download**.
-- Backups and the database file contain staff accounts. Share them only privately, never on GitHub or in group chats.
-- Stop the Codespace when you are done (**Code → Codespaces → … → Stop codespace**) to save your free Codespaces hours.
+### Keep the data safe
 
-## Handing over to a colleague
-
-Every Codespace has its own copy of the database. To let someone else continue:
-
-1. Run `bash system/backup.sh` and download the backup.
-2. Send it to them privately.
-3. They drag it into `system/database/private` in their Codespace and run `bash system/reset.sh` (or `bash system/start.sh` on a new Codespace). The newest file in the folder is loaded.
-
-Simplest: let **one person** do the publishing, and hand over the backup when that changes.
+- All uploads live in this one Codespace. **GitHub deletes a Codespace that has not been opened for 30 days.** Run `bash system/backup.sh` every week or after important uploads, then right-click the backup in the Explorer → **Download**.
+- Backups and the database file contain staff accounts. Keep them private, never on GitHub or in group chats.
+- Use **one** Codespace for the whole team. A second Codespace would have its own separate data. If a different person takes over, give them the latest backup: they drag it into `system/database/private` in their Codespace and run `bash system/start.sh` (or `bash system/reset.sh`).
+- Before publishing, the system checks that it has every upload already on the website and refuses otherwise, so a second copy cannot remove published data.
 
 ## Good to know
 
-- This is a separate copy. Uploads here do not reach the real NIS server, and data on the real server does not appear here.
-- The login is created for this copy (`nis-admin`). The staff accounts in the database keep their own passwords.
-- All settings and generated passwords are in `system/.env` in your Codespace; it is never saved to GitHub.
-- Something wrong? `docker compose -f system/docker-compose.yml logs server` shows the server log (`db`, `admin` for the others).
+- This is a separate copy of the NIS system. Uploads here do not reach the team's NIS server, and data uploaded there does not appear here.
+- Anyone with the link can see the sign-in page. Staff passwords should be strong, and accounts that are no longer needed should be disabled in **User Management**.
+- Settings and generated passwords are in `system/.env` inside the Codespace; it is never saved to GitHub. `AUTO_PUBLISH=no` turns automatic publishing off; `SHARE_LINK=no` keeps the link private to the owner.
+- Logs: `docker compose -f system/docker-compose.yml logs server` (or `db`, `admin`).
+- **Without Codespaces**: on any always-on computer with Docker and Git, clone the repository, put the database file in `system/database/private` and run `bash system/start.sh`. The admin portal is then at `http://<that computer>:8080/login`. That computer needs permission to push to this repository for automatic publishing.
 
-## How it fits together
+## How it works
 
-```
-admin portal (admin-portal/, port 8080) ── /api/ ──► NIS server (server/) ──► PostgreSQL (your database file)
-                                                                                    │
-                                              bash system/publish.sh ◄──────────────┘
-                                                        │  exports approved data to public/data/, pushes to GitHub
-                                                        ▼
-                                     "Deploy website" GitHub Action ──► public website (GitHub Pages)
-```
-
-Files: `docker-compose.yml` runs the three parts; `database/init/` loads your database file and creates the `nis-admin` login on the first start; `lib/check-releases.mjs` is the safety check used by `publish.sh`. Codespaces settings are in `.devcontainer/devcontainer.json`.
-
-**Without Codespaces**: on any computer with Docker and Git, clone the repository, put the database file in `system/database/private`, and run the same commands (the admin portal is at http://localhost:8080/login).
+- `docker-compose.yml` runs PostgreSQL 18, the NIS server (`server/`) and the admin portal (`admin-portal/`, port 8080, which forwards `/api/` to the server).
+- `database/init/` loads the database file and creates the `nis-admin` login on the first start.
+- `auto-publish.sh` checks every minute whether the set of approved uploads changed and then runs `publish.sh`: it exports the approved data to `public/data/`, checks nothing published elsewhere would be lost (`lib/check-releases.mjs`) and pushes to GitHub. The **Deploy website** GitHub Action then rebuilds the website.
+- `.devcontainer/devcontainer.json` sets up the Codespace and starts the system whenever the Codespace starts.

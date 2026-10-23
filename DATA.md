@@ -70,11 +70,11 @@ New data is entered through the **existing NIS admin portal**, not through this 
 
 1. **Upload**: sign in to the admin portal → **Dataset → New Dataset** → enter a title, choose the category (ministry) and the template (table), choose the Excel file filled in with that table's template, and **Submit**. The server reads the file into the table and marks it **Pending**.
 2. **Approve**: a reviewer opens **Approval Management**, checks the upload and clicks **Approve**. Only approved uploads are public.
-3. **Publish**: run `npm run refresh` (or let the scheduled refresh below do it). The new figures appear on the website within a few minutes, including the home-page figures and the province map if the upload belongs to their tables.
+3. **Publish**: in the admin system in this repository this happens **by itself** about 30 seconds after an approval, and the website shows the new data 2–3 minutes later (including the home-page figures and the province map). Elsewhere, run `npm run refresh`.
 
 > **Each approved upload replaces the previous data of that table** — the server marks the earlier upload as cancelled. Always upload the **complete table** (all years) using the table's template, not just the new rows.
 
-**Admin system in the browser.** The server and admin portal in this repository run in GitHub Codespaces, with nothing to install: **Code → Codespaces → Create codespace**, drag the database file into `system/database/private`, run `bash system/start.sh`, and publish with `bash system/publish.sh`. Step by step: [system/README.md](system/README.md). The database file (`01-nis-data.sql.gz`) comes privately from the project owner; it is never put on GitHub because it contains staff accounts. The same system also runs on any computer with Docker, and the Docker Desktop practice zip still works.
+**Admin system.** The server and admin portal in this repository run in one GitHub Codespace kept open by the owner. Staff only open the admin portal link and sign in with their usual NIS accounts; approved uploads reach the website by themselves. Owner and staff steps: [system/README.md](system/README.md). The database file (`01-nis-data.sql.gz`) comes privately from the project owner; it is never put on GitHub because it contains staff accounts. Don't publish from the old Docker Desktop practice zip any more: it has no safety check and would overwrite data published from the admin system.
 
 To publish approvals automatically, schedule `npm run refresh` every night (cron on Linux, Task Scheduler on Windows) on a computer that has this project, the `.env` file, Node.js, and permission to push to GitHub.
 

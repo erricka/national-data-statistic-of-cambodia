@@ -4,6 +4,9 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+# Docker may still be starting right after the Codespace opens.
+for i in $(seq 1 30); do docker info >/dev/null 2>&1 && break; sleep 2; done
+
 shopt -s nullglob
 db_files=(database/private/*.sql database/private/*.sql.gz database/private/*.dump)
 if [ ${#db_files[@]} -eq 0 ] && ! docker volume inspect nis-system_db-data >/dev/null 2>&1; then
@@ -54,23 +57,46 @@ for i in $(seq 1 180); do
   printf "."; sleep 5
 done
 
+# Publish approved data to the website automatically (AUTO_PUBLISH=no in system/.env turns it off).
+if [ "${AUTO_PUBLISH:-yes}" = "yes" ] && \
+   ! { [ -f .auto-publish.pid ] && kill -0 "$(cat .auto-publish.pid)" 2>/dev/null; }; then
+  nohup bash ./auto-publish.sh >> auto-publish.log 2>&1 &
+  echo $! > .auto-publish.pid
+fi
+
+shared=""
 if [ -n "${CODESPACE_NAME:-}" ]; then
   url="https://${CODESPACE_NAME}-8080.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN:-app.github.dev}/login"
+  # Let staff open the admin portal without a GitHub account (SHARE_LINK=no in system/.env turns it off).
+  if [ "${SHARE_LINK:-yes}" = "yes" ]; then
+    if gh codespace ports visibility 8080:public -c "$CODESPACE_NAME" >/dev/null 2>&1; then
+      shared=yes
+    else
+      shared=no
+    fi
+  fi
 else
   url="http://localhost:8080/login"
 fi
 echo
 echo "  Admin portal:  $url"
+if [ "$shared" = "yes" ]; then
+  echo "                 Staff can open this link while this Codespace is running, and sign in"
+  echo "                 with their usual NIS account."
+elif [ "$shared" = "no" ]; then
+  echo "                 To let staff open it: Ports tab (next to Terminal) -> right-click port 8080"
+  echo "                 -> Port Visibility -> Public."
+fi
 admin_ok=$(docker compose exec -T db psql -U postgres -d nis -tAc \
   "SELECT 1 FROM users WHERE user_id = '$ADMIN_USER'" 2>/dev/null || true)
 if [ "$admin_ok" = "1" ]; then
-  echo "  Username:      $ADMIN_USER"
-  echo "  Password:      $ADMIN_PASSWORD"
+  echo "  Your login:    $ADMIN_USER  /  $ADMIN_PASSWORD"
 else
   echo "  The database was not set up completely. Its log ends with:"
   docker compose logs --no-log-prefix db 2>&1 | grep -iE "error|fatal|loading|running" | tail -n 5 | sed 's/^/    /'
   echo "  Fix the cause, then start again from the database file with:  bash system/reset.sh"
 fi
 echo
-echo "  To put approved data on the public website:  bash system/publish.sh"
+echo "  Approved data goes to the public website automatically within a few minutes."
+echo "  (Progress: system/auto-publish.log. To publish right away: bash system/publish.sh)"
 echo

@@ -4,7 +4,7 @@ A new public statistics portal for the **National Institute of Statistics (NIS),
 
 It is a drop-in public front end for the existing NIS data platform (`nis-web-portal-server`): it reads the same approved data, speaks the same API, and keeps the old portal's URLs working.
 
-**Live site:** https://erricka.github.io/national-data-statistic-of-cambodia/ · **Team guide:** [DATA.md](DATA.md) — how the data flows, how to refresh it, and how to contribute and publish changes · **Admin system:** [system/README.md](system/README.md) — the NIS server and admin portal, running in the browser with GitHub Codespaces.
+**Live site:** https://erricka.github.io/national-data-statistic-of-cambodia/ · **Team guide:** [DATA.md](DATA.md) — how the data flows, how to refresh it, and how to contribute and publish changes · **Admin system:** [system/README.md](system/README.md) — the NIS server and admin portal in GitHub Codespaces: staff upload Excel through one link and the website updates by itself.
 
 ![Home page](docs/screenshots/home.webp)
 
@@ -116,7 +116,7 @@ The repository also contains the NIS data platform the website reads from, with 
 |---|---|
 | `server/` | NIS server (`nis-web-portal-server`): Kotlin, Spring Boot 4, MyBatis, Java 23. API under `/api/nis-portal`, Excel/CSV upload readers, approval workflow. |
 | `admin-portal/` | NIS admin portal (`nis-web-portal`): React, Vite. Upload, approval, users, categories, templates. |
-| `system/` | Docker Compose setup that runs PostgreSQL 18, the server and the admin portal, plus `start.sh`, `publish.sh`, `backup.sh`, `stop.sh` and `reset.sh`. |
+| `system/` | Docker Compose setup that runs PostgreSQL 18, the server and the admin portal, plus `start.sh`, `publish.sh`, `auto-publish.sh` (publishes each approval to the website by itself), `backup.sh`, `stop.sh` and `reset.sh`. |
 | `.devcontainer/` | GitHub Codespaces configuration (Docker in Docker, 4 cores / 16 GB). |
 
 The database is **not** included. Put a database file in `system/database/private/` (git-ignored) and run `bash system/start.sh`; see [system/README.md](system/README.md).

@@ -4,7 +4,8 @@
   "name": "NIS data system",
   "image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
   "features": {
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
   },
   "hostRequirements": {
     "cpus": 4,
@@ -16,6 +17,8 @@
     "5173": { "label": "Website preview", "onAutoForward": "notify" }
   },
   "postCreateCommand": "npm ci --no-audit --no-fund",
+  // After the first setup, start the admin system (and automatic publishing) whenever the Codespace starts.
+  "postStartCommand": "if [ -f system/.env ]; then nohup bash system/start.sh > system/start.log 2>&1 & fi",
   "postAttachCommand": "bash system/welcome.sh",
   "customizations": {
     "codespaces": {

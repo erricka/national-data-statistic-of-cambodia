@@ -16,3 +16,5 @@ server/build/
 server/.gradle/
 server/uploads/
 admin-portal/dist/
+system/.auto-publish.pid
+system/*.log
